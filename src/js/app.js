@@ -14,6 +14,19 @@
   // ---------- Helpers ----------
   function el(id) { return document.getElementById(id); }
 
+  // Wake Lock : empêche l'écran de se verrouiller/éteindre pendant l'usage.
+  // (nécessite https — actif sur GitHub Pages ; ignoré silencieusement sinon)
+  let wakeLock = null;
+  function requestWakeLock() {
+    try {
+      if (!('wakeLock' in navigator)) return;
+      navigator.wakeLock.request('screen').then(function (wl) {
+        wakeLock = wl;
+        wl.addEventListener('release', function () { wakeLock = null; });
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function setTheme(theme) {
     currentTheme = theme;
     document.body.setAttribute('data-theme', theme);
@@ -475,7 +488,11 @@
     window.addEventListener('hashchange', render);
     // reprise audio + amorçage des voix sur 1re interaction (politique navigateurs)
     document.addEventListener('pointerdown', function once() {
-      MK.audio.resume(); MK.audio.primeVoices(); document.removeEventListener('pointerdown', once);
+      MK.audio.resume(); MK.audio.primeVoices(); requestWakeLock(); document.removeEventListener('pointerdown', once);
+    });
+    // garde l'écran allumé (évite que le téléphone se verrouille pendant l'usage)
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') requestWakeLock();
     });
 
     render();

@@ -62,11 +62,22 @@
         '</div>';
       const mic = this.host.querySelector('#sp-mic');
       mic.addEventListener('click', () => this.listen());
-      // énonce la question (sans la réponse)
+      // énonce la question (sans la réponse) PUIS écoute automatiquement
       MK.audio.speakOperation(a, b);
+      this.scheduleListen(2000); // auto-écoute : pas besoin de retaper le micro
+    }
+
+    // Démarre l'écoute après un délai (laisse finir la voix avant d'ouvrir le micro)
+    scheduleListen(delay) {
+      clearTimeout(this.autoTimer);
+      const self = this;
+      this.autoTimer = setTimeout(function () {
+        if (!self.busy && self.host.querySelector('#sp-mic')) self.listen();
+      }, delay || 1800);
     }
 
     listen() {
+      clearTimeout(this.autoTimer);
       if (this.busy) return;
       this.busy = true;
       const mic = this.host.querySelector('#sp-mic');
@@ -109,9 +120,10 @@
           this.i++;
           setTimeout(() => this.renderQuestion(), 2200);
         } else {
-          // on REDEMANDE (même question)
+          // on REDEMANDE (même question) puis on ré-écoute automatiquement
           if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
           setTimeout(() => { MK.audio.speak(t('speak_try_again'), this.code()); }, 300);
+          this.scheduleListen(2200);
         }
       }
     }
@@ -123,7 +135,8 @@
       this.busy = false;
       if (err === 'no-speech' || err === 'aborted') {
         if (fb) { fb.textContent = t('speak_no_speech'); fb.className = 'feedback ko'; }
-        return; // l'enfant peut retaper le micro
+        this.scheduleListen(1200); // ré-écoute auto (pas besoin de retaper)
+        return;
       }
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         if (fb) { fb.textContent = t('speak_mic_denied'); fb.className = 'feedback ko'; }
@@ -153,6 +166,7 @@
     }
 
     stop() {
+      clearTimeout(this.autoTimer);
       if (this.rec) { try { this.rec.abort ? this.rec.abort() : this.rec.stop(); } catch (e) {} this.rec = null; }
       this.busy = false;
     }
