@@ -956,38 +956,44 @@ body[data-theme="jungle"] .leaf {
   // Énonce un texte clairement dans la langue donnée.
   // La voix est choisie AU MOMENT de parler (après chargement des voix) → la
   // bonne voix grecque est utilisée, jamais la voix française par défaut.
-  function speak(text, langCode) {
-    if (!enabled) return;
-    if (!('speechSynthesis' in window)) return; // fallback silencieux
+  // onDone (optionnel) : appelé une seule fois quand la voix a FINI de parler
+  // (sert à rouvrir le micro exactement à la fin de l'annonce → réponse immédiate)
+  function speak(text, langCode, onDone) {
+    let fired = false;
+    const done = function () { if (fired || !onDone) return; fired = true; try { onDone(); } catch (e) {} };
+    if (!enabled || !('speechSynthesis' in window)) { if (onDone) setTimeout(done, 0); return; }
     const code = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
     const prefix = code.toLowerCase().slice(0, 2); // 'el' | 'fr'
     try { window.speechSynthesis.cancel(); } catch (e) {}
+    const str = String(text);
     whenVoicesReady(function () {
       try {
-        const utt = new SpeechSynthesisUtterance(String(text));
+        const utt = new SpeechSynthesisUtterance(str);
         utt.lang = code;
         const v = pickVoice(prefix);
         if (v) utt.voice = v;        // voix de la BONNE langue (grec en mode grec)
         utt.rate = effectiveRate();  // vitesse réglable (Réglages)
         utt.pitch = 1.1;
         utt.volume = 1;
-        // petit délai : contourne un bug Chrome où cancel() coupe l'utterance suivante
-        setTimeout(function () { try { window.speechSynthesis.speak(utt); } catch (e) {} }, 60);
-      } catch (e) { /* fallback silencieux */ }
+        utt.onend = done;
+        utt.onerror = done;
+        setTimeout(function () { try { window.speechSynthesis.speak(utt); } catch (e) { done(); } }, 60);
+        // sécurité : si onend ne se déclenche pas (bug Chrome), on libère quand même
+        if (onDone) setTimeout(done, Math.max(1500, str.length * 130) / effectiveRate() + 1600);
+      } catch (e) { done(); }
     });
   }
 
-  // Énonce « a FOIS b ÉGALE r » (ou sans résultat), avec pauses claires.
+  // Énonce « a FOIS b ÉGALE r » (ou sans résultat). onDone appelé à la fin.
   // L'opérateur (× = « fois » / « επί ») est TOUJOURS énoncé.
-  function speakOperation(a, b, r) {
+  function speakOperation(a, b, r, onDone) {
     const lang = MK.i18n ? MK.i18n.getLang() : 'el';
     const code = (lang === 'fr') ? 'fr-FR' : 'el-GR';
     const times = MK.i18n.t('times');   // fr: "fois"  | el: "επί"
     const eq = MK.i18n.t('equals');     // fr: "égale" | el: "ίσον"
-    // les virgules créent des micro-pauses → élocution plus nette
     let txt = a + ', ' + times + ', ' + b;
     if (r !== undefined && r !== null) txt += ', ' + eq + ', ' + r;
-    speak(txt, code);
+    speak(txt, code, onDone);
   }
 
   function cancel() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {} }
@@ -2491,10 +2497,10 @@ body[data-theme="jungle"] .leaf {
       // le micro reste TOUJOURS ouvert : le bouton sert juste à le relancer s'il a planté
       const mic = this.host.querySelector('#sp-mic');
       mic.addEventListener('click', () => { this.errCount = 0; this.startMic(); });
-      // annonce le calcul UNE fois ; pendant ce temps on ignore le micro
+      // annonce le calcul UNE fois ; le micro se rouvre DÈS la fin de l'annonce
+      // (pas de délai fixe → l'enfant peut répondre tout de suite)
       this.speaking = true;
-      MK.audio.speakOperation(a, b);
-      this.later(() => { this.speaking = false; }, 1800);
+      MK.audio.speakOperation(a, b, undefined, () => { this.speaking = false; });
     }
 
     // Ouvre (ou rouvre) la session de reconnaissance CONTINUE — micro permanent
@@ -2561,11 +2567,10 @@ body[data-theme="jungle"] .leaf {
           this.i++;
           this.later(() => this.next(), 2200);
         } else {
-          // on REDEMANDE (voix courte, le micro reste ouvert)
+          // on REDEMANDE (voix courte) ; micro rouvert dès la fin de l'invite
           if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
           this.speaking = true;
-          MK.audio.speak(t('speak_try_again'), this.code());
-          this.later(() => { this.speaking = false; }, 1500);
+          MK.audio.speak(t('speak_try_again'), this.code(), () => { this.speaking = false; });
         }
       }
     }

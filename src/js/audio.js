@@ -131,38 +131,44 @@
   // Énonce un texte clairement dans la langue donnée.
   // La voix est choisie AU MOMENT de parler (après chargement des voix) → la
   // bonne voix grecque est utilisée, jamais la voix française par défaut.
-  function speak(text, langCode) {
-    if (!enabled) return;
-    if (!('speechSynthesis' in window)) return; // fallback silencieux
+  // onDone (optionnel) : appelé une seule fois quand la voix a FINI de parler
+  // (sert à rouvrir le micro exactement à la fin de l'annonce → réponse immédiate)
+  function speak(text, langCode, onDone) {
+    let fired = false;
+    const done = function () { if (fired || !onDone) return; fired = true; try { onDone(); } catch (e) {} };
+    if (!enabled || !('speechSynthesis' in window)) { if (onDone) setTimeout(done, 0); return; }
     const code = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
     const prefix = code.toLowerCase().slice(0, 2); // 'el' | 'fr'
     try { window.speechSynthesis.cancel(); } catch (e) {}
+    const str = String(text);
     whenVoicesReady(function () {
       try {
-        const utt = new SpeechSynthesisUtterance(String(text));
+        const utt = new SpeechSynthesisUtterance(str);
         utt.lang = code;
         const v = pickVoice(prefix);
         if (v) utt.voice = v;        // voix de la BONNE langue (grec en mode grec)
         utt.rate = effectiveRate();  // vitesse réglable (Réglages)
         utt.pitch = 1.1;
         utt.volume = 1;
-        // petit délai : contourne un bug Chrome où cancel() coupe l'utterance suivante
-        setTimeout(function () { try { window.speechSynthesis.speak(utt); } catch (e) {} }, 60);
-      } catch (e) { /* fallback silencieux */ }
+        utt.onend = done;
+        utt.onerror = done;
+        setTimeout(function () { try { window.speechSynthesis.speak(utt); } catch (e) { done(); } }, 60);
+        // sécurité : si onend ne se déclenche pas (bug Chrome), on libère quand même
+        if (onDone) setTimeout(done, Math.max(1500, str.length * 130) / effectiveRate() + 1600);
+      } catch (e) { done(); }
     });
   }
 
-  // Énonce « a FOIS b ÉGALE r » (ou sans résultat), avec pauses claires.
+  // Énonce « a FOIS b ÉGALE r » (ou sans résultat). onDone appelé à la fin.
   // L'opérateur (× = « fois » / « επί ») est TOUJOURS énoncé.
-  function speakOperation(a, b, r) {
+  function speakOperation(a, b, r, onDone) {
     const lang = MK.i18n ? MK.i18n.getLang() : 'el';
     const code = (lang === 'fr') ? 'fr-FR' : 'el-GR';
     const times = MK.i18n.t('times');   // fr: "fois"  | el: "επί"
     const eq = MK.i18n.t('equals');     // fr: "égale" | el: "ίσον"
-    // les virgules créent des micro-pauses → élocution plus nette
     let txt = a + ', ' + times + ', ' + b;
     if (r !== undefined && r !== null) txt += ', ' + eq + ', ' + r;
-    speak(txt, code);
+    speak(txt, code, onDone);
   }
 
   function cancel() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {} }

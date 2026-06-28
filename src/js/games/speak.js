@@ -72,10 +72,10 @@
       // le micro reste TOUJOURS ouvert : le bouton sert juste à le relancer s'il a planté
       const mic = this.host.querySelector('#sp-mic');
       mic.addEventListener('click', () => { this.errCount = 0; this.startMic(); });
-      // annonce le calcul UNE fois ; pendant ce temps on ignore le micro
+      // annonce le calcul UNE fois ; le micro se rouvre DÈS la fin de l'annonce
+      // (pas de délai fixe → l'enfant peut répondre tout de suite)
       this.speaking = true;
-      MK.audio.speakOperation(a, b);
-      this.later(() => { this.speaking = false; }, 1800);
+      MK.audio.speakOperation(a, b, undefined, () => { this.speaking = false; });
     }
 
     // Ouvre (ou rouvre) la session de reconnaissance CONTINUE — micro permanent
@@ -142,11 +142,10 @@
           this.i++;
           this.later(() => this.next(), 2200);
         } else {
-          // on REDEMANDE (voix courte, le micro reste ouvert)
+          // on REDEMANDE (voix courte) ; micro rouvert dès la fin de l'invite
           if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
           this.speaking = true;
-          MK.audio.speak(t('speak_try_again'), this.code());
-          this.later(() => { this.speaking = false; }, 1500);
+          MK.audio.speak(t('speak_try_again'), this.code(), () => { this.speaking = false; });
         }
       }
     }

@@ -2,7 +2,7 @@
    on sert toujours la dernière version en ligne, et on garde une copie en
    cache uniquement pour le mode hors-ligne. (Évite de rester bloqué sur une
    vieille version mise en cache.) */
-const CACHE = 'multiplikids-v3';
+const CACHE = 'multiplikids-v4';
 const ASSETS = ['./', 'index.html', 'manifest.json'];
 
 self.addEventListener('install', function (e) {
