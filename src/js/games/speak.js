@@ -1,31 +1,30 @@
 /* ============================================================
    MultipliKids — games/speak.js
    Jeu ORAL 🎤 : l'enfant RÉPOND À VOIX HAUTE (dans sa langue).
-   Micro EN CONTINU : il se ré-arme automatiquement → l'enfant peut répondre
-   à tout moment, sans jamais retaper le micro. Redemande si la réponse est fausse.
+   MICRO PERMANENT : une seule session de reconnaissance CONTINUE reste ouverte
+   tout le jeu (relancée si elle se termine). Pendant que l'app parle, on ignore
+   simplement le micro (drapeau `speaking`) → il ne se coupe jamais.
+   Calcul énoncé UNE fois ; correct → suivant ; faux → réessayer.
    Nécessite micro + contexte sécurisé (https/localhost) + Internet.
-   Contrat : new Speak(host, {table, level, onFinish}) → start()/stop()
    ============================================================ */
 (function () {
   'use strict';
   window.MK = window.MK || {}; MK.games = MK.games || {};
   const t = function (k) { return MK.i18n.t(k); };
-  const MAX = 10;          // ×1 à ×10
-  const MAX_TRIES = 3;     // après 3 essais ratés, on révèle et on avance
-  const MAX_ERR = 6;       // erreurs dures consécutives → on s'arrête proprement
+  const MAX = 10;
+  const MAX_TRIES = 3;
+  const MAX_ERR = 8;
 
   class Speak {
     constructor(host, opts) {
       this.host = host;
       this.table = opts.table || 2;
       this.onFinish = opts.onFinish || function () {};
-      this.i = 1;
-      this.correct = 0;
-      this.attempts = 0;
+      this.i = 1; this.correct = 0; this.attempts = 0;
       this.rec = null;
-      this.active = false;   // jeu en cours
-      this.paused = false;   // micro suspendu (pendant la voix / l'avance)
-      this.busy = false;     // une session de reconnaissance est ouverte
+      this.active = false;     // jeu en cours
+      this.speaking = false;   // l'app parle → on ignore le micro (sans le couper)
+      this.starting = false;   // une (re)création de session est en cours
       this.errCount = 0;
       this.timers = [];
     }
@@ -38,6 +37,7 @@
       this.i = 1; this.correct = 0; this.errCount = 0; this.active = true;
       if (!MK.audio.canRecognize()) { this.renderUnsupported(); return; }
       this.next();
+      this.startMic();   // ouvre le micro et le garde ouvert en permanence
     }
 
     renderUnsupported() {
@@ -63,119 +63,106 @@
           '</div>' +
           '<p class="center" style="color:var(--color-text-dim)">' + t('speak_say') + '</p>' +
           '<div class="question-big">' + a + ' × ' + b + ' = ?</div>' +
-          '<div class="center"><button class="mic-btn" id="sp-mic" aria-label="' + t('speak_say') + '">🎤</button></div>' +
+          '<div class="center"><button class="mic-btn listening" id="sp-mic" aria-label="' + t('speak_say') + '">🎤</button></div>' +
           '<div class="feedback" id="sp-fb" role="status"></div>' +
           '<div class="center" id="sp-heard" style="color:var(--color-text-dim);min-height:1.4em"></div>' +
           '<div class="row mt" id="sp-actions"></div>' +
           '<div class="game-hud"><span class="score">' + this.i + ' / ' + MAX + '</span></div>' +
         '</div>';
+      // le micro reste TOUJOURS ouvert : le bouton sert juste à le relancer s'il a planté
       const mic = this.host.querySelector('#sp-mic');
-      mic.addEventListener('click', () => { this.paused = false; this.arm(true); }); // relance immédiate
-      // annonce la question, PUIS ouvre le micro en continu
-      this.paused = true;
-      this.stopRec();
+      mic.addEventListener('click', () => { this.errCount = 0; this.startMic(); });
+      // annonce le calcul UNE fois ; pendant ce temps on ignore le micro
+      this.speaking = true;
       MK.audio.speakOperation(a, b);
-      this.later(() => { this.paused = false; this.arm(); }, 1900);
+      this.later(() => { this.speaking = false; }, 1800);
     }
 
-    setMic(listening) {
-      const mic = this.host.querySelector('#sp-mic');
-      if (mic) mic.classList.toggle('listening', !!listening);
-      const fb = this.host.querySelector('#sp-fb');
-      if (listening && fb && !fb.classList.contains('ok') && !fb.classList.contains('ko')) {
-        fb.textContent = t('speak_listening'); fb.className = 'feedback';
-      }
-    }
-
-    // Arme (ou ré-arme) la reconnaissance. force=true → relance même si une session tourne.
-    arm(force) {
-      if (!this.active || this.paused) return;
-      if (this.busy && !force) return;
-      if (force) this.stopRec();
-      this.busy = true;
+    // Ouvre (ou rouvre) la session de reconnaissance CONTINUE — micro permanent
+    startMic() {
+      if (!this.active || this.starting) return;
+      this.starting = true;
+      this.stopRec();
       MK.audio.resume();
       this.setMic(true);
       const self = this;
       this.rec = MK.audio.listen(this.code(), {
+        continuous: true,
         onResult: function (alts) { self.onSaid(alts); },
-        onError: function (err) { self.onErr(err); },
+        onError: function (err) { self.starting = false; self.onErr(err); },
         onEnd: function () {
-          self.busy = false;
-          self.setMic(false);
-          // RE-ARMEMENT AUTOMATIQUE → micro en continu
-          if (self.active && !self.paused) self.later(function () { self.arm(); }, 250);
+          self.starting = false;
+          // session terminée (silence/limite navigateur) → on RELANCE → micro permanent
+          if (self.active) self.later(function () { self.startMic(); }, 300);
+          else self.setMic(false);
         },
       });
-      if (!this.rec) { this.busy = false; this.setMic(false); }
+      // onstart non garanti : on libère le verrou peu après
+      this.later(() => { this.starting = false; }, 600);
+      if (!this.rec) { this.starting = false; this.setMic(false); }
     }
 
     stopRec() {
       if (this.rec) { try { this.rec.abort ? this.rec.abort() : this.rec.stop(); } catch (e) {} this.rec = null; }
-      this.busy = false;
     }
 
-    // Énonce une courte invite (PAS le calcul) en suspendant le micro, puis le rouvre
-    sayThenListen(text, delay) {
-      this.paused = true; this.stopRec();
-      MK.audio.speak(text, this.code());
-      this.later(() => { this.paused = false; this.arm(); }, delay || 1600);
+    setMic(on) {
+      const mic = this.host.querySelector('#sp-mic');
+      if (mic) mic.classList.toggle('listening', !!on);
     }
 
     onSaid(alts) {
+      if (!this.active || this.speaking) return;   // ignore la voix de l'app / hors-jeu
       const heard = this.host.querySelector('#sp-heard');
       const fb = this.host.querySelector('#sp-fb');
       const said = (alts && alts[0]) ? alts[0] : '';
-      if (heard) heard.textContent = said ? '« ' + said + ' »' : '';
+      if (!said) return;
+      if (heard) heard.textContent = '« ' + said + ' »';
       this.errCount = 0;
 
       const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
       if (ok) {
-        // BONNE réponse → on passe à la suivante (SANS redire le calcul : entendu 1 fois)
-        this.paused = true; this.stopRec();
+        // BONNE réponse → question suivante (sans redire le calcul). Micro garde ouvert.
+        this.speaking = true; // ignore le micro pendant la transition + annonce suivante
         this.correct++;
         if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
         MK.audio.playCorrect();
         MK.progress.addXP(10);
         this.i++;
         this.later(() => this.next(), 1000);
-      } else if (said) {
-        // réponse FAUSSE et audible
+      } else {
+        // réponse FAUSSE
         this.attempts++;
         MK.audio.playWrong();
         MK.visual.shake(this.host.querySelector('.game-stage'));
         if (this.attempts >= MAX_TRIES) {
-          this.paused = true; this.stopRec();
+          this.speaking = true;
           if (fb) { fb.textContent = t('speak_show_answer') + ' ' + this.answer; fb.className = 'feedback ko'; }
           MK.audio.speakOperation(this.table, this.i, this.answer);
           this.i++;
           this.later(() => this.next(), 2200);
         } else {
-          // on REDEMANDE de réessayer (voix courte, SANS redire le calcul), puis micro
+          // on REDEMANDE (voix courte, le micro reste ouvert)
           if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
-          this.sayThenListen(t('speak_try_again'), 1700);
+          this.speaking = true;
+          MK.audio.speak(t('speak_try_again'), this.code());
+          this.later(() => { this.speaking = false; }, 1500);
         }
       }
-      // si rien d'audible (said vide) → on ne fait rien, le micro se ré-arme
     }
 
     onErr(err) {
-      this.setMic(false);
-      // erreurs transitoires : le micro se ré-armera via onEnd (silence, réseau bref…)
-      if (err === 'no-speech' || err === 'aborted' || err === 'network') {
-        const fb = this.host.querySelector('#sp-fb');
-        if (err === 'no-speech' && fb && !fb.classList.contains('ok') && !fb.classList.contains('ko')) {
-          fb.textContent = t('speak_no_speech'); fb.className = 'feedback';
-        }
+      // transitoires → la session se relancera via onEnd → micro reste permanent
+      if (err === 'no-speech' || err === 'aborted' || err === 'network' || err === 'audio-capture') {
         this.errCount++;
         if (this.errCount >= MAX_ERR) this.hardStop('error');
         return;
       }
-      // erreurs dures : micro refusé / indisponible
-      this.hardStop(err);
+      this.hardStop(err); // refus micro / indisponible
     }
 
     hardStop(err) {
-      this.paused = true; this.stopRec(); this.clearTimers();
+      this.active = false; this.stopRec(); this.clearTimers(); this.setMic(false);
       const fb = this.host.querySelector('#sp-fb');
       const denied = (err === 'not-allowed' || err === 'service-not-allowed');
       if (fb) { fb.textContent = denied ? t('speak_mic_denied') : t('speak_mic_error'); fb.className = 'feedback ko'; }
@@ -185,9 +172,9 @@
           '<button class="btn btn--primary" id="sp-retry">🎤</button>' +
           '<button class="btn btn--ghost" id="sp-skip">' + t('btn_next') + ' →</button>';
         const r = actions.querySelector('#sp-retry');
-        if (r) r.addEventListener('click', () => { this.errCount = 0; this.paused = false; this.arm(true); });
+        if (r) r.addEventListener('click', () => { this.errCount = 0; this.active = true; this.startMic(); });
         const s = actions.querySelector('#sp-skip');
-        if (s) s.addEventListener('click', () => { this.i++; this.next(); });
+        if (s) s.addEventListener('click', () => { this.active = true; this.i++; this.next(); this.startMic(); });
       }
     }
 
@@ -207,7 +194,7 @@
     }
 
     stop() {
-      this.active = false; this.paused = true;
+      this.active = false; this.speaking = true;
       this.clearTimers();
       this.stopRec();
     }

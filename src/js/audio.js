@@ -249,12 +249,15 @@
     rec.lang = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
     rec.interimResults = false;
     rec.maxAlternatives = 5;       // plusieurs hypothèses → meilleure chance de matcher
-    rec.continuous = false;
+    rec.continuous = !!opts.continuous; // session permanente si demandé
     rec.onresult = function (e) {
       const alts = [];
-      const res = e.results && e.results[0];
-      if (res) for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
-      if (opts.onResult) opts.onResult(alts);
+      const start = (typeof e.resultIndex === 'number') ? e.resultIndex : 0;
+      for (let r = start; r < e.results.length; r++) {
+        const res = e.results[r];
+        for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
+      }
+      if (alts.length && opts.onResult) opts.onResult(alts);
     };
     rec.onerror = function (e) { if (opts.onError) opts.onError((e && e.error) || 'error'); };
     rec.onend = function () { if (opts.onEnd) opts.onEnd(); };
