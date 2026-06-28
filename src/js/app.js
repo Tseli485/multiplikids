@@ -499,7 +499,12 @@
 
     // PWA : enregistrement service worker (optionnel, échoue silencieusement)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
+      navigator.serviceWorker.register('sw.js').then(function (reg) { try { reg.update(); } catch (e) {} }).catch(function () {});
+      // quand une nouvelle version prend le contrôle → recharge une fois (transparent)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true; location.reload();
+      });
     }
   }
 
