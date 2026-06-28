@@ -114,6 +114,13 @@
       this.busy = false;
     }
 
+    // Énonce une courte invite (PAS le calcul) en suspendant le micro, puis le rouvre
+    sayThenListen(text, delay) {
+      this.paused = true; this.stopRec();
+      MK.audio.speak(text, this.code());
+      this.later(() => { this.paused = false; this.arm(); }, delay || 1600);
+    }
+
     onSaid(alts) {
       const heard = this.host.querySelector('#sp-heard');
       const fb = this.host.querySelector('#sp-fb');
@@ -123,15 +130,14 @@
 
       const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
       if (ok) {
-        // BONNE réponse → on suspend le micro, on confirme, on passe à la suivante
+        // BONNE réponse → on passe à la suivante (SANS redire le calcul : entendu 1 fois)
         this.paused = true; this.stopRec();
         this.correct++;
         if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
         MK.audio.playCorrect();
         MK.progress.addXP(10);
-        MK.audio.speakOperation(this.table, this.i, this.answer);
         this.i++;
-        this.later(() => this.next(), 1500);
+        this.later(() => this.next(), 1000);
       } else if (said) {
         // réponse FAUSSE et audible
         this.attempts++;
@@ -144,8 +150,9 @@
           this.i++;
           this.later(() => this.next(), 2200);
         } else {
-          // on REDEMANDE — le micro reste actif (pas de TTS pour ne pas le brouiller)
+          // on REDEMANDE de réessayer (voix courte, SANS redire le calcul), puis micro
           if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
+          this.sayThenListen(t('speak_try_again'), 1700);
         }
       }
       // si rien d'audible (said vide) → on ne fait rien, le micro se ré-arme
