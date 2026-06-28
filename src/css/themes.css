@@ -1,0 +1,49 @@
+/* ============================================================
+   MultipliKids — themes.css
+   Thèmes enfant : espace (défaut), océan, jungle
+   Appliqués via <body data-theme="space|ocean|jungle">
+   ============================================================ */
+
+/* ---------- Thème ESPACE (défaut) ---------- */
+body[data-theme="space"] {
+  --color-bg: #1A1A2E;
+  --color-surface: #16213E;
+  --color-surface-2: #1f2b50;
+  --color-primary: #FF6B35;
+  --color-secondary: #4ECDC4;
+}
+body[data-theme="space"] #bg-decor { background: radial-gradient(ellipse at top, #20204a 0%, #0c0c1d 70%); }
+body[data-theme="space"] .star {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: #fff; animation: twinkle 3s ease-in-out infinite;
+}
+
+/* ---------- Thème OCÉAN ---------- */
+body[data-theme="ocean"] {
+  --color-bg: #04263a;
+  --color-surface: #073a55;
+  --color-surface-2: #0a4d6e;
+  --color-primary: #00b4d8;
+  --color-secondary: #90e0ef;
+  --color-accent: #ffd166;
+}
+body[data-theme="ocean"] #bg-decor { background: linear-gradient(180deg,#04263a,#021622); }
+body[data-theme="ocean"] .bubble {
+  position: absolute; bottom: -20px; border-radius: 50%;
+  background: rgba(144,224,239,.25); animation: rise linear infinite;
+}
+
+/* ---------- Thème JUNGLE ---------- */
+body[data-theme="jungle"] {
+  --color-bg: #102a13;
+  --color-surface: #1b3d1f;
+  --color-surface-2: #27512c;
+  --color-primary: #52b788;
+  --color-secondary: #b7e4c7;
+  --color-accent: #ffd166;
+}
+body[data-theme="jungle"] #bg-decor { background: linear-gradient(180deg,#143518,#0a1d0c); }
+body[data-theme="jungle"] .leaf {
+  position: absolute; font-size: 1.4rem; opacity: .5;
+  animation: sway ease-in-out infinite;
+}

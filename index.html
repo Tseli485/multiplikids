@@ -1,0 +1,3072 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+  <meta name="theme-color" content="#1A1A2E">
+  <meta name="description" content="MultipliKids — apprends les tables de multiplication en jouant, en francais et en grec.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>MultipliKids — Tables de multiplication</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%96%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <style>
+/* ============================================================
+   MultipliKids — main.css
+   Design system + reset + variables + layout
+   Mobile-first (base 375px)
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root {
+  /* Palette (thème espace par défaut, surchargée par themes.css) */
+  --color-primary: #FF6B35;
+  --color-secondary: #4ECDC4;
+  --color-accent: #FFE66D;
+  --color-success: #06D6A0;
+  --color-error: #EF476F;
+  --color-bg: #1A1A2E;
+  --color-surface: #16213E;
+  --color-surface-2: #1f2b50;
+  --color-text: #EAEAEA;
+  --color-text-dim: #a7b0c8;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+  --shadow-soft: 0 4px 12px rgba(0,0,0,.25);
+
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+
+  --tap: 48px; /* cible tactile minimale */
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-body);
+  font-size: 18px;            /* minimum lisible enfants */
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-tap-highlight-color: transparent; /* pas de flash gris au tap */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+/* Pas de sélection de texte pendant le jeu (taps rapides) */
+.game-stage, .table-tile, .answer-btn, .mem-card, .rhythm-target, .topbar { user-select: none; -webkit-user-select: none; }
+button { font-family: inherit; font-size: inherit; cursor: pointer; border: none; touch-action: manipulation; }
+ul { list-style: none; }
+img, svg { display: block; max-width: 100%; }
+
+/* ---------- Background décor (étoiles, géré par themes.css) ---------- */
+#bg-decor {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+
+/* ---------- App shell ---------- */
+#app {
+  position: relative; z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+  min-height: 100vh;
+}
+
+/* ---------- Topbar ---------- */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0 16px;
+}
+.topbar__title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--color-accent);
+  flex: 1;
+  letter-spacing: .5px;
+}
+.topbar__spacer { flex: 1; }
+
+/* Bouton générique */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--tap); min-width: var(--tap);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+  transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
+  text-align: center;
+}
+.btn:hover { transform: translateY(-2px) scale(1.03); }
+.btn:active { transform: scale(.96); }
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--secondary { background: var(--color-secondary); color: #06303a; }
+.btn--accent { background: var(--color-accent); color: #3a2e00; }
+.btn--ghost { background: transparent; box-shadow: none; border: 2px solid var(--color-surface-2); }
+.btn--icon { padding: 10px; border-radius: 50%; font-size: 1.3rem; }
+.btn--lang { font-size: 1.4rem; padding: 8px 12px; }
+.btn--lang.active { outline: 3px solid var(--color-accent); }
+
+/* ---------- Cartes & grilles ---------- */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.screen-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+  color: #fff;
+}
+.screen-sub { color: var(--color-text-dim); margin-bottom: 20px; }
+
+/* Sélecteur de tables */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.table-tile {
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative;
+  transition: transform .12s ease, background .2s ease;
+}
+.table-tile:hover { transform: scale(1.06); background: var(--color-primary); }
+.table-tile.locked { opacity: .4; filter: grayscale(.6); }
+.table-tile .stars { font-size: .8rem; margin-top: 2px; letter-spacing: 1px; }
+.table-tile .lock { position: absolute; top: 4px; right: 6px; font-size: .9rem; }
+
+/* Liste de jeux */
+.game-list { display: grid; gap: 12px; margin-top: 16px; }
+.game-list .btn { justify-content: flex-start; font-size: 1.1rem; }
+
+/* Choix génériques (niveau, thème) */
+.choice-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 20px; }
+.chip {
+  padding: 10px 16px; border-radius: 999px;
+  background: var(--color-surface-2); color: var(--color-text);
+  font-weight: 700; min-height: var(--tap);
+}
+.chip.active { background: var(--color-accent); color: #3a2e00; }
+
+/* ---------- Zone de jeu ---------- */
+#game-host { margin-top: 8px; }
+.game-stage {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.game-hud {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 16px; font-weight: 800;
+}
+.game-hud .lives { color: var(--color-error); letter-spacing: 2px; font-size: 1.2rem; }
+.game-hud .score { margin-left: auto; color: var(--color-accent); }
+
+/* Question géante */
+.question-big {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 10vw, 3.5rem);
+  text-align: center;
+  color: #fff;
+  margin: 12px 0 20px;
+}
+
+/* Boutons réponses QCM */
+.answers {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.answer-btn {
+  min-height: 64px; font-size: 1.6rem; font-family: var(--font-display);
+  border-radius: var(--radius); background: var(--color-surface-2); color: #fff;
+  box-shadow: var(--shadow-soft); transition: transform .12s, background .15s;
+}
+.answer-btn:hover { transform: translateY(-2px); }
+.answer-btn.correct { background: var(--color-success); color: #032b20; }
+.answer-btn.wrong { background: var(--color-error); color: #fff; }
+
+/* Barre chrono / progression */
+.bar { height: 12px; border-radius: 999px; background: var(--color-surface-2); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--color-secondary); width: 100%; transition: width .1s linear; }
+.bar.bar--xp > span { background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); }
+
+/* Feedback */
+.feedback {
+  text-align: center; font-family: var(--font-display); font-size: 1.4rem;
+  min-height: 1.6em; margin: 12px 0;
+}
+.feedback.ok { color: var(--color-success); }
+.feedback.ko { color: var(--color-error); }
+
+/* ---------- Progression ---------- */
+.stat-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.stat {
+  flex: 1; min-width: 120px; background: var(--color-surface); border-radius: var(--radius);
+  padding: 16px; text-align: center; box-shadow: var(--shadow-soft);
+}
+.stat .num { font-family: var(--font-display); font-size: 1.8rem; color: var(--color-accent); }
+.stat .lbl { color: var(--color-text-dim); font-size: .85rem; }
+
+.progress-table {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--color-surface); border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-bottom: 8px;
+}
+.progress-table .name { font-weight: 800; width: 64px; }
+.progress-table .bar { flex: 1; }
+.progress-table .pct { width: 48px; text-align: right; color: var(--color-text-dim); }
+
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px,1fr)); gap: 12px; margin-top: 12px; }
+.badge { text-align: center; }
+.badge svg { width: 56px; height: 56px; margin: 0 auto; }
+.badge.locked { opacity: .25; filter: grayscale(1); }
+.badge .badge-lbl { font-size: .75rem; margin-top: 4px; color: var(--color-text-dim); }
+
+/* ---------- Mémoire (grille) ---------- */
+.memory-grid { display: grid; gap: 10px; margin-top: 12px; }
+.mem-card {
+  aspect-ratio: 3/4; border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.3rem; color: #fff;
+  position: relative; transform-style: preserve-3d; transition: transform .35s;
+}
+.mem-card.flipped, .mem-card.matched { background: var(--color-surface-2); }
+.mem-card.matched { background: var(--color-success); color: #032b20; }
+.mem-card .face { backface-visibility: hidden; }
+
+/* ---------- Rocket ---------- */
+.rocket-field {
+  position: relative; height: clamp(200px, 42vh, 320px); border-radius: var(--radius);
+  background: linear-gradient(180deg, #05060f, #16213E); overflow: hidden; margin-bottom: 16px;
+}
+.rocket { position: absolute; left: 50%; transform: translateX(-50%); font-size: 2.4rem; transition: bottom .4s ease; }
+
+/* ---------- Rhythm ---------- */
+.rhythm-field {
+  position: relative; height: clamp(240px, 52vh, 380px); border-radius: var(--radius);
+  background: linear-gradient(180deg,#0d1030,#16213E); overflow: hidden; margin-bottom: 12px;
+}
+.rhythm-target {
+  position: absolute; padding: 10px 16px; border-radius: 999px;
+  background: var(--color-surface-2); color:#fff; font-family: var(--font-display);
+  font-size: 1.3rem; white-space: nowrap; will-change: top;
+}
+.rhythm-hitline { position: absolute; left:0; right:0; bottom: 56px; height: 3px; background: var(--color-accent); opacity: .7; }
+
+/* ---------- Flashcard (flip 3D) ---------- */
+.flashcard-wrap { perspective: 1200px; margin: 12px auto 20px; max-width: 320px; }
+.flashcard {
+  position: relative; width: 100%; aspect-ratio: 4/3;
+  transform-style: preserve-3d; transition: transform .5s; cursor: pointer;
+}
+.flashcard.flipped { transform: rotateY(180deg); }
+.flashcard .face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  font-family: var(--font-display); font-size: clamp(2rem,9vw,3rem); color: #fff;
+}
+.flashcard .front { background: var(--color-surface-2); }
+.flashcard .back { background: var(--color-success); color: #032b20; transform: rotateY(180deg); }
+
+/* ---------- Utilitaires ---------- */
+.center { text-align: center; }
+.mt { margin-top: 16px; }
+.mt-lg { margin-top: 28px; }
+.hidden { display: none !important; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row > .btn { flex: 1; }
+
+/* Confetti canvas */
+#confetti-canvas { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+
+/* Toast badge débloqué */
+#toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120%);
+  background: var(--color-accent); color:#3a2e00; font-weight:800;
+  padding: 14px 22px; border-radius: 999px; box-shadow: var(--shadow); z-index: 60;
+  transition: transform .4s cubic-bezier(.2,1.4,.4,1); max-width: 90vw;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ---------- Responsive up ---------- */
+@media (min-width: 600px) {
+  body { font-size: 19px; }
+  .answers { gap: 16px; }
+  .topbar__title { font-size: 2rem; }
+}
+/* Tablette */
+@media (min-width: 768px) {
+  #app { max-width: 820px; padding: 24px 24px 48px; }
+  .table-grid { grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .answer-btn { min-height: 76px; font-size: 1.9rem; }
+  .flashcard-wrap { max-width: 400px; }
+  .memory-grid { gap: 14px; }
+}
+
+/* PC / grand écran : on élargit, on agrandit, on garde une colonne lisible et centrée */
+@media (min-width: 1024px) {
+  body { font-size: 20px; }
+  #app { max-width: 960px; padding: 32px 32px 56px; }
+  .topbar__title { font-size: 2.2rem; }
+  .screen-title { font-size: 1.9rem; }
+  .table-grid { grid-template-columns: repeat(6, 1fr); gap: 18px; }
+  .table-tile { font-size: 1.8rem; }
+  .question-big { font-size: clamp(3rem, 5vw, 4.5rem); }
+  .answer-btn { min-height: 90px; font-size: 2.2rem; }
+  .game-list { grid-template-columns: 1fr 1fr; }   /* jeux sur 2 colonnes */
+  .flashcard-wrap { max-width: 460px; }
+  .rocket-field { height: 360px; }
+  .rhythm-field { height: 440px; }
+  .badges { grid-template-columns: repeat(auto-fill, minmax(96px,1fr)); }
+}
+
+/* Très grand écran : on plafonne pour rester confortable (pas d'étirement) */
+@media (min-width: 1440px) {
+  #app { max-width: 1060px; }
+  .answers { gap: 20px; }
+}
+
+/* Souris (PC) : retours visuels au survol un peu plus marqués */
+@media (hover: hover) and (pointer: fine) {
+  .table-tile:hover { box-shadow: 0 0 0 3px var(--color-accent); }
+  .answer-btn:hover { box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+}
+
+/* Très petits écrans (≤360px) */
+@media (max-width: 360px) {
+  body { font-size: 17px; }
+  #app { padding: 12px 12px 32px; }
+  .topbar__title { font-size: 1.35rem; }
+  .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .answer-btn { min-height: 56px; font-size: 1.35rem; }
+}
+
+/* Paysage sur petit appareil (hauteur réduite) : compacter pour éviter le scroll */
+@media (orientation: landscape) and (max-height: 500px) {
+  .answers { grid-template-columns: repeat(4, 1fr); }
+  .question-big { font-size: clamp(1.6rem, 7vh, 2.4rem); margin: 6px 0 10px; }
+  .answer-btn { min-height: 48px; font-size: 1.3rem; }
+  .rocket-field { height: 40vh; }
+  .rhythm-field { height: 60vh; }
+  .flashcard-wrap { max-width: 260px; }
+  .topbar { padding: 4px 0 8px; }
+}
+
+/* ---------- Écran APPRENDRE (étude visuelle synchronisée) ---------- */
+.study-list { display: grid; gap: 10px; margin-top: 12px; }
+.study-row {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;
+  min-height: 56px; padding: 12px 18px; border-radius: var(--radius);
+  background: var(--color-surface); color: var(--color-text);
+  font-family: var(--font-display); font-size: 1.5rem; box-shadow: var(--shadow-soft);
+  transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.study-row .op { text-align: right; }
+.study-row .eq { color: var(--color-text-dim); }
+.study-row .res { text-align: left; color: var(--color-accent); }
+.study-row:hover { transform: scale(1.02); }
+/* ligne en cours de lecture : mise en avant nette */
+.study-row.active {
+  background: var(--color-primary); color: #fff;
+  transform: scale(1.06); box-shadow: 0 0 0 3px var(--color-accent), var(--shadow);
+}
+.study-row.active .eq, .study-row.active .res { color: #fff; }
+
+/* Toujours UNE seule colonne (tablette/PC compris) */
+.study-list { max-width: 460px; margin-left: auto; margin-right: auto; }
+@media (min-width: 768px) { .study-row { font-size: 1.7rem; min-height: 62px; } }
+@media (min-width: 1024px) { .study-row { font-size: 1.9rem; min-height: 68px; } }
+
+/* ---------- Jeu ORAL (micro) ---------- */
+.mic-btn {
+  width: 110px; height: 110px; border-radius: 50%;
+  background: var(--color-primary); color: #fff; font-size: 3rem;
+  box-shadow: var(--shadow); margin: 12px auto; display: block;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.mic-btn:hover { transform: scale(1.06); }
+.mic-btn:active { transform: scale(.94); }
+.mic-btn.listening {
+  background: var(--color-error);
+  animation: micPulse 1s ease-in-out infinite;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,71,111,.6); transform: scale(1); }
+  50% { box-shadow: 0 0 0 18px rgba(239,71,111,0); transform: scale(1.08); }
+}
+@media (min-width: 1024px) { .mic-btn { width: 130px; height: 130px; font-size: 3.5rem; } }
+
+/* ---------- Modale de confirmation (texte 100% dans la langue active,
+   boutons ✔ / ✖ neutres → aucun libellé de locale navigateur) ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  animation: slideIn .2s ease both;
+}
+.modal {
+  background: var(--color-surface); border-radius: var(--radius);
+  padding: 24px; max-width: 360px; width: 100%; text-align: center; box-shadow: var(--shadow);
+}
+.modal p { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 18px; color: #fff; }
+.modal .row .btn { font-size: 1.6rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ============================================================
+   MultipliKids — animations.css
+   Toutes les animations keyframes
+   ============================================================ */
+
+/* Apparition des écrans (slide) */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen-enter { animation: slideIn .35s ease both; }
+
+/* Pop (cartes, tuiles au montage) */
+@keyframes pop {
+  0%   { transform: scale(.7); opacity: 0; }
+  70%  { transform: scale(1.06); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop { animation: pop .3s ease both; }
+
+/* Shake sur mauvaise réponse */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-9px); }
+  40% { transform: translateX(9px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.shake { animation: shake .4s ease; }
+
+/* Bounce (hover boutons importants) */
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.btn--primary:hover { animation: bounce .6s ease infinite; }
+
+/* Pulse (bouton son, éléments d'attention) */
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+.pulse { animation: pulse 1.2s ease-in-out infinite; }
+
+/* Étoiles scintillantes (background) */
+@keyframes twinkle {
+  0%,100% { opacity: .25; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Défilement étoiles (rocket / espace) */
+@keyframes drift {
+  from { transform: translateY(-10%); }
+  to   { transform: translateY(110%); }
+}
+
+/* Bulles océan */
+@keyframes rise {
+  from { transform: translateY(10%); opacity: .6; }
+  to   { transform: translateY(-120%); opacity: 0; }
+}
+
+/* Feuilles jungle */
+@keyframes sway {
+  0%,100% { transform: translateY(0) rotate(-8deg); }
+  50% { transform: translateY(14px) rotate(8deg); }
+}
+
+/* Succès : zoom rebond du feedback */
+@keyframes celebrate {
+  0% { transform: scale(.5); opacity: 0; }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.celebrate { animation: celebrate .5s ease both; }
+
+/* Badge débloqué : rotation + scale */
+@keyframes badgePop {
+  0% { transform: scale(0) rotate(-180deg); }
+  60% { transform: scale(1.2) rotate(10deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.badge-pop { animation: badgePop .6s cubic-bezier(.2,1.4,.4,1) both; }
+
+/* Barre chrono qui passe au rouge (ajout JS sur faible temps) */
+@keyframes flashRed {
+  0%,100% { background: var(--color-error); }
+  50% { background: #ff9aae; }
+}
+.bar--danger > span { animation: flashRed .6s ease-in-out infinite; }
+
+/* Flottement de la fusée */
+@keyframes hover {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+.rocket { animation: hover 1.4s ease-in-out infinite; }
+
+/* ============================================================
+   MultipliKids — themes.css
+   Thèmes enfant : espace (défaut), océan, jungle
+   Appliqués via <body data-theme="space|ocean|jungle">
+   ============================================================ */
+
+/* ---------- Thème ESPACE (défaut) ---------- */
+body[data-theme="space"] {
+  --color-bg: #1A1A2E;
+  --color-surface: #16213E;
+  --color-surface-2: #1f2b50;
+  --color-primary: #FF6B35;
+  --color-secondary: #4ECDC4;
+}
+body[data-theme="space"] #bg-decor { background: radial-gradient(ellipse at top, #20204a 0%, #0c0c1d 70%); }
+body[data-theme="space"] .star {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: #fff; animation: twinkle 3s ease-in-out infinite;
+}
+
+/* ---------- Thème OCÉAN ---------- */
+body[data-theme="ocean"] {
+  --color-bg: #04263a;
+  --color-surface: #073a55;
+  --color-surface-2: #0a4d6e;
+  --color-primary: #00b4d8;
+  --color-secondary: #90e0ef;
+  --color-accent: #ffd166;
+}
+body[data-theme="ocean"] #bg-decor { background: linear-gradient(180deg,#04263a,#021622); }
+body[data-theme="ocean"] .bubble {
+  position: absolute; bottom: -20px; border-radius: 50%;
+  background: rgba(144,224,239,.25); animation: rise linear infinite;
+}
+
+/* ---------- Thème JUNGLE ---------- */
+body[data-theme="jungle"] {
+  --color-bg: #102a13;
+  --color-surface: #1b3d1f;
+  --color-surface-2: #27512c;
+  --color-primary: #52b788;
+  --color-secondary: #b7e4c7;
+  --color-accent: #ffd166;
+}
+body[data-theme="jungle"] #bg-decor { background: linear-gradient(180deg,#143518,#0a1d0c); }
+body[data-theme="jungle"] .leaf {
+  position: absolute; font-size: 1.4rem; opacity: .5;
+  animation: sway ease-in-out infinite;
+}
+
+  </style>
+</head>
+<body data-theme="space">
+  <div id="bg-decor" aria-hidden="true"></div>
+  <main id="app" role="main"></main>
+  <script>
+/* ============================================================
+   MultipliKids — i18n.js
+   Système bilingue FR / GR. Toute string visible passe par t().
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {};
+
+  const STRINGS = {
+    fr: {
+      app_name: 'MultipliKids',
+      home_title: 'Apprends tes tables en jouant !',
+      home_sub: 'Choisis une table et un jeu pour commencer.',
+      choose_table: 'Choisis ta table',
+      choose_level: 'Choisis ton niveau',
+      choose_game: 'Choisis un jeu',
+      level: 'Niveau',
+      level_1: 'Niveau 1 (6–7 ans)',
+      level_2: 'Niveau 2 (7–9 ans)',
+      level_3: 'Niveau 3 (9–11 ans)',
+      level_4: 'Niveau 4 (11–12 ans)',
+      btn_play: 'Jouer',
+      btn_learn: 'Apprendre',
+      btn_progress: 'Mon progrès',
+      btn_settings: 'Réglages',
+      btn_back: 'Retour',
+      btn_home: 'Accueil',
+      btn_repeat: '🔊 Répéter',
+      btn_replay: 'Recommencer',
+      btn_next: 'Suivant',
+      btn_knew: '✅ Je savais',
+      btn_didnt: '❌ Je ne savais pas',
+      table_of: 'Table de',
+      game_flashcard: '🃏 Cartes Flash',
+      game_quiz: '⏱️ Quiz chrono',
+      game_memory: '🧠 Jeu Mémoire',
+      game_rocket: '🚀 Fusée',
+      game_rhythm: '🎵 Rythme',
+      correct: 'Bravo ! 🎉',
+      wrong: 'Réessaie ! 💪',
+      correct_short: 'Réponse correcte',
+      time_up: 'Temps écoulé',
+      tap_to_flip: 'Touche la carte pour voir la réponse',
+      score: 'Score',
+      points: 'Points',
+      xp: 'XP',
+      lives: 'Vies',
+      streak: 'Série',
+      level_done: 'Niveau terminé !',
+      game_over: 'Partie terminée',
+      your_score: 'Ton score',
+      encourage_high: 'Champion·ne des tables ! 🌟',
+      encourage_mid: 'Bien joué, continue ! 👍',
+      encourage_low: 'Tu progresses, encore un essai ! 💪',
+      my_progress: 'Mon progrès',
+      tables_mastered: 'Tables maîtrisées',
+      total_xp: 'XP total',
+      day_streak: 'Jours de suite',
+      badges: 'Récompenses',
+      badge_unlocked: 'Badge débloqué !',
+      no_badges: 'Joue pour gagner des badges !',
+      settings: 'Réglages',
+      language: 'Langue',
+      theme: 'Thème',
+      theme_space: '🌌 Espace',
+      theme_ocean: '🌊 Océan',
+      theme_jungle: '🌿 Jungle',
+      reset: 'Réinitialiser ma progression',
+      reset_confirm: 'Effacer toute ta progression ?',
+      sound_on: 'Sons activés',
+      locked: 'Verrouillé',
+      unlock_hint: 'Termine les niveaux précédents pour débloquer.',
+      boss: 'Boss : 10 questions, 60 secondes !',
+      quit_confirm: 'Quitter le jeu en cours ?',
+      times: 'fois',
+      equals: 'égale',
+      find_pair: 'Trouve les paires !',
+      tap_correct: 'Tape la bonne réponse !',
+      share: 'Partager',
+      share_done: 'Lien copié !',
+      free_mode: 'Mode libre (toutes les tables)',
+      free_mode_hint: 'Activé : toutes les tables sont accessibles.',
+      voice: 'Voix',
+      voice_default: 'Voix par défaut',
+      no_greek_voice: '⚠️ Aucune voix grecque détectée — installe-la dans Windows.',
+      speed: 'Vitesse de la voix',
+      speed_slow: 'Lente',
+      speed_normal: 'Normale',
+      speed_fast: 'Rapide',
+      test_voice: '🔊 Tester',
+      study_hint: 'Écoute et regarde la table 👀👂',
+      game_speak: '🎤 Récite (parle)',
+      speak_tap: 'Touche le micro et dis la réponse',
+      speak_listening: '🎙️ J\'écoute…',
+      speak_try_again: 'Redis la réponse !',
+      speak_no_speech: 'Je n\'ai pas entendu, réessaie 🎤',
+      speak_show_answer: 'La réponse était',
+      speak_mic_error: 'Micro indisponible',
+      speak_mic_denied: 'Autorise le micro pour jouer 🎤',
+      speak_need_https: 'Le micro marche en ligne (https) ou sur localhost, pas en ouverture directe du fichier.',
+    },
+    el: {
+      app_name: 'MultipliKids',
+      home_title: 'Μάθε τους πολλαπλασιασμούς παίζοντας!',
+      home_sub: 'Διάλεξε έναν πίνακα και ένα παιχνίδι για να ξεκινήσεις.',
+      choose_table: 'Διάλεξε τον πίνακα',
+      choose_level: 'Διάλεξε επίπεδο',
+      choose_game: 'Διάλεξε παιχνίδι',
+      level: 'Επίπεδο',
+      level_1: 'Επίπεδο 1 (6–7 ετών)',
+      level_2: 'Επίπεδο 2 (7–9 ετών)',
+      level_3: 'Επίπεδο 3 (9–11 ετών)',
+      level_4: 'Επίπεδο 4 (11–12 ετών)',
+      btn_play: 'Παίξε',
+      btn_learn: 'Μάθε',
+      btn_progress: 'Η πρόοδός μου',
+      btn_settings: 'Ρυθμίσεις',
+      btn_back: 'Πίσω',
+      btn_home: 'Αρχική',
+      btn_repeat: '🔊 Ξανά',
+      btn_replay: 'Ξανά',
+      btn_next: 'Επόμενο',
+      btn_knew: '✅ Το ήξερα',
+      btn_didnt: '❌ Δεν το ήξερα',
+      table_of: 'Πίνακας του',
+      game_flashcard: '🃏 Κάρτες',
+      game_quiz: '⏱️ Κουίζ',
+      game_memory: '🧠 Μνήμη',
+      game_rocket: '🚀 Πύραυλος',
+      game_rhythm: '🎵 Ρυθμός',
+      correct: 'Μπράβο! 🎉',
+      wrong: 'Δοκίμασε ξανά! 💪',
+      correct_short: 'Σωστή απάντηση',
+      time_up: 'Ο χρόνος τελείωσε',
+      tap_to_flip: 'Άγγιξε την κάρτα για την απάντηση',
+      score: 'Σκορ',
+      points: 'Πόντοι',
+      xp: 'XP',
+      lives: 'Ζωές',
+      streak: 'Σερί',
+      level_done: 'Το επίπεδο τελείωσε!',
+      game_over: 'Τέλος παιχνιδιού',
+      your_score: 'Το σκορ σου',
+      encourage_high: 'Πρωταθλητής στους πίνακες! 🌟',
+      encourage_mid: 'Μπράβο, συνέχισε! 👍',
+      encourage_low: 'Προοδεύεις, δοκίμασε ξανά! 💪',
+      my_progress: 'Η πρόοδός μου',
+      tables_mastered: 'Πίνακες που κατέκτησες',
+      total_xp: 'Σύνολο XP',
+      day_streak: 'Συνεχόμενες μέρες',
+      badges: 'Βραβεία',
+      badge_unlocked: 'Ξεκλείδωσες αστέρι!',
+      no_badges: 'Παίξε για να κερδίσεις βραβεία!',
+      settings: 'Ρυθμίσεις',
+      language: 'Γλώσσα',
+      theme: 'Θέμα',
+      theme_space: '🌌 Διάστημα',
+      theme_ocean: '🌊 Ωκεανός',
+      theme_jungle: '🌿 Ζούγκλα',
+      reset: 'Μηδενισμός προόδου',
+      reset_confirm: 'Να σβηστεί όλη η πρόοδος;',
+      sound_on: 'Ήχοι ενεργοί',
+      locked: 'Κλειδωμένο',
+      unlock_hint: 'Τελείωσε τα προηγούμενα επίπεδα για ξεκλείδωμα.',
+      boss: 'Αφεντικό: 10 ερωτήσεις σε 60 δευτερόλεπτα!',
+      quit_confirm: 'Έξοδος από το παιχνίδι;',
+      times: 'επί',
+      equals: 'ίσον',
+      find_pair: 'Βρες τα ζευγάρια!',
+      tap_correct: 'Πάτα τη σωστή απάντηση!',
+      share: 'Μοιράσου',
+      share_done: 'Ο σύνδεσμος αντιγράφηκε!',
+      free_mode: 'Ελεύθερη λειτουργία (όλοι οι πίνακες)',
+      free_mode_hint: 'Ενεργό: όλοι οι πίνακες είναι διαθέσιμοι.',
+      voice: 'Φωνή',
+      voice_default: 'Προεπιλεγμένη φωνή',
+      no_greek_voice: '⚠️ Δεν βρέθηκε ελληνική φωνή — εγκατέστησέ την στα Windows.',
+      speed: 'Ταχύτητα φωνής',
+      speed_slow: 'Αργή',
+      speed_normal: 'Κανονική',
+      speed_fast: 'Γρήγορη',
+      test_voice: '🔊 Δοκιμή',
+      study_hint: 'Άκου και κοίτα τον πίνακα 👀👂',
+      game_speak: '🎤 Πες το (φωνή)',
+      speak_tap: 'Πάτα το μικρόφωνο και πες την απάντηση',
+      speak_listening: '🎙️ Ακούω…',
+      speak_try_again: 'Πες ξανά την απάντηση!',
+      speak_no_speech: 'Δεν άκουσα, δοκίμασε ξανά 🎤',
+      speak_show_answer: 'Η απάντηση ήταν',
+      speak_mic_error: 'Το μικρόφωνο δεν είναι διαθέσιμο',
+      speak_mic_denied: 'Επίτρεψε το μικρόφωνο για να παίξεις 🎤',
+      speak_need_https: 'Το μικρόφωνο δουλεύει online (https) ή σε localhost, όχι με άνοιγμα του αρχείου απευθείας.',
+    },
+  };
+
+  const LANG_KEY = 'multiplikids_lang';
+  let current = 'el'; // DÉFAUT = GREC (l'enfant ne comprend que le grec)
+
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'fr' || saved === 'el') current = saved;
+  } catch (e) { /* mode privé : on garde le grec */ }
+
+  const listeners = [];
+
+  function t(key) {
+    const dict = STRINGS[current] || STRINGS.fr;
+    return (key in dict) ? dict[key] : (STRINGS.fr[key] || key);
+  }
+
+  function getLang() { return current; }
+
+  function setLang(lang) {
+    if (lang !== 'fr' && lang !== 'el') return;
+    current = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    document.documentElement.lang = (lang === 'el') ? 'el' : 'fr';
+    listeners.forEach(function (fn) { fn(lang); });
+  }
+
+  // Code de langue pour la Web Speech API
+  function speechLang() { return current === 'fr' ? 'fr-FR' : 'el-GR'; }
+
+  // Abonnement aux changements de langue (l'UI se re-render)
+  function onChange(fn) { listeners.push(fn); }
+
+  document.documentElement.lang = (current === 'el') ? 'el' : 'fr';
+
+  window.MK.i18n = { t: t, getLang: getLang, setLang: setLang, speechLang: speechLang, onChange: onChange, STRINGS: STRINGS };
+})();
+
+/* ============================================================
+   MultipliKids — audio.js
+   Web Speech API (prononciation CLAIRE) + Web Audio API (sons générés)
+   Fallback silencieux si non supporté.
+   Diction : voix adaptée à la langue, débit lent, pauses, opérateur énoncé.
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {};
+
+  let audioCtx = null;
+  let enabled = true;
+  let voices = [];
+
+  /* Préférences persistées : voix choisie + multiplicateur de vitesse */
+  const VOICE_KEY = 'multiplikids_voice';
+  const RATE_KEY = 'multiplikids_rate';
+  let prefVoiceURI = null;
+  let rateMult = 1;
+  try {
+    prefVoiceURI = localStorage.getItem(VOICE_KEY) || null;
+    const r = parseFloat(localStorage.getItem(RATE_KEY));
+    if (!isNaN(r) && r >= 0.5 && r <= 1.5) rateMult = r;
+  } catch (e) {}
+  const BASE_RATE = 0.8; // débit de référence (enfant) ; rate effectif = BASE_RATE * rateMult
+
+  /* ---------- Chargement des voix (asynchrone selon navigateur) ----------
+     Les voix arrivent souvent APRÈS le 1er getVoices() (event 'voiceschanged').
+     Tant qu'elles ne sont pas prêtes, on ne sait pas si une voix grecque existe :
+     parler tout de suite ferait lire le grec par la voix par défaut (français !).
+     → on attend qu'elles soient chargées avant de parler. */
+  function loadVoices() {
+    try { voices = window.speechSynthesis.getVoices() || []; }
+    catch (e) { voices = []; }
+    return voices;
+  }
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    try { window.speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) {}
+    // certains navigateurs ne déclenchent getVoices qu'après un appel : on amorce
+    try { window.speechSynthesis.getVoices(); } catch (e) {}
+  }
+
+  const norm = function (l) { return (l || '').toLowerCase().replace('_', '-'); };
+
+  // Choisit la meilleure voix pour 'el' (grec) ou 'fr' (français)
+  function pickVoice(prefix) {
+    loadVoices(); // re-lecture systématique : capte une voix installée tardivement
+    const matches = voices.filter(function (v) { return norm(v.lang).indexOf(prefix) === 0; });
+    if (!matches.length) return null;
+    // 1) voix choisie par l'utilisateur (si compatible avec la langue)
+    if (prefVoiceURI) {
+      const chosen = matches.find(function (v) { return v.voiceURI === prefVoiceURI; });
+      if (chosen) return chosen;
+    }
+    // 2) sinon, préfère une voix locale (meilleure qualité hors-ligne)
+    const local = matches.find(function (v) { return v.localService; });
+    return local || matches[0];
+  }
+
+  function hasVoice(prefix) { return !!pickVoice(prefix); }
+
+  // Liste des voix d'une langue (pour le sélecteur dans les Réglages)
+  function listVoices(prefix) {
+    loadVoices();
+    return voices
+      .filter(function (v) { return norm(v.lang).indexOf(prefix) === 0; })
+      .map(function (v) { return { name: v.name, lang: v.lang, uri: v.voiceURI, local: !!v.localService }; });
+  }
+  function setPreferredVoice(uri) { prefVoiceURI = uri || null; try { uri ? localStorage.setItem(VOICE_KEY, uri) : localStorage.removeItem(VOICE_KEY); } catch (e) {} }
+  function getPreferredVoice() { return prefVoiceURI; }
+  function setRate(mult) { rateMult = Math.max(0.5, Math.min(1.5, mult || 1)); try { localStorage.setItem(RATE_KEY, String(rateMult)); } catch (e) {} }
+  function getRate() { return rateMult; }
+  function effectiveRate() { return Math.max(0.4, Math.min(1.6, BASE_RATE * rateMult)); }
+
+  // Exécute fn quand les voix sont disponibles (ou après un court délai garde-fou)
+  function whenVoicesReady(fn) {
+    loadVoices();
+    if (voices.length) { fn(); return; }
+    if (!('speechSynthesis' in window)) { fn(); return; }
+    let done = false;
+    const run = function () { if (done) return; done = true; loadVoices(); fn(); };
+    try { window.speechSynthesis.addEventListener('voiceschanged', run, { once: true }); } catch (e) {}
+    setTimeout(run, 400); // garde-fou si l'event ne se déclenche pas
+  }
+
+  /* ---------- Web Audio (sons générés) ---------- */
+  function ensureCtx() {
+    if (!enabled) return null;
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    } catch (e) { return null; }
+  }
+
+  function tone(freq, start, dur, type, gainPeak) {
+    const ctx = ensureCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    const t0 = ctx.currentTime + start;
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(gainPeak || 0.2, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
+  }
+
+  function playCorrect() {
+    [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.09, 0.22, 'triangle', 0.18); });
+  }
+  function playWrong() {
+    tone(155.56, 0, 0.28, 'sawtooth', 0.16);
+    tone(130.81, 0.06, 0.3, 'square', 0.12);
+  }
+  function playFanfare() {
+    [523.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, i * 0.16, 0.35, 'triangle', 0.22); });
+    tone(1318.5, 0.5, 0.5, 'sine', 0.18);
+  }
+  function playTick() { tone(880, 0, 0.06, 'square', 0.08); }
+
+  /* ---------- Prononciation (Web Speech API) ---------- */
+  // Énonce un texte clairement dans la langue donnée.
+  // La voix est choisie AU MOMENT de parler (après chargement des voix) → la
+  // bonne voix grecque est utilisée, jamais la voix française par défaut.
+  function speak(text, langCode) {
+    if (!enabled) return;
+    if (!('speechSynthesis' in window)) return; // fallback silencieux
+    const code = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
+    const prefix = code.toLowerCase().slice(0, 2); // 'el' | 'fr'
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    whenVoicesReady(function () {
+      try {
+        const utt = new SpeechSynthesisUtterance(String(text));
+        utt.lang = code;
+        const v = pickVoice(prefix);
+        if (v) utt.voice = v;        // voix de la BONNE langue (grec en mode grec)
+        utt.rate = effectiveRate();  // vitesse réglable (Réglages)
+        utt.pitch = 1.1;
+        utt.volume = 1;
+        // petit délai : contourne un bug Chrome où cancel() coupe l'utterance suivante
+        setTimeout(function () { try { window.speechSynthesis.speak(utt); } catch (e) {} }, 60);
+      } catch (e) { /* fallback silencieux */ }
+    });
+  }
+
+  // Énonce « a FOIS b ÉGALE r » (ou sans résultat), avec pauses claires.
+  // L'opérateur (× = « fois » / « επί ») est TOUJOURS énoncé.
+  function speakOperation(a, b, r) {
+    const lang = MK.i18n ? MK.i18n.getLang() : 'el';
+    const code = (lang === 'fr') ? 'fr-FR' : 'el-GR';
+    const times = MK.i18n.t('times');   // fr: "fois"  | el: "επί"
+    const eq = MK.i18n.t('equals');     // fr: "égale" | el: "ίσον"
+    // les virgules créent des micro-pauses → élocution plus nette
+    let txt = a + ', ' + times + ', ' + b;
+    if (r !== undefined && r !== null) txt += ', ' + eq + ', ' + r;
+    speak(txt, code);
+  }
+
+  function cancel() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {} }
+
+  /* ---------- Narration fluide (séquence enchaînée) ----------
+     Pour APPRENDRE une table : on enchaîne les phrases via l'évènement onend
+     (on attend que chaque ligne finisse avant la suivante) — JAMAIS de cancel()
+     entre les lignes, sinon le son est haché/coupé. Anti-pause Chrome inclus. */
+  let seqId = 0;
+  let keepAlive = null;
+
+  function clearKeepAlive() { if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } }
+
+  // Stoppe toute narration en cours (et toute parole)
+  function stopSpeech() { seqId++; clearKeepAlive(); cancel(); }
+
+  // lines : tableau de chaînes à dire l'une après l'autre.
+  // opts.onLine(index) : appelé quand la ligne `index` COMMENCE (pour surligner le visuel)
+  // opts.onDone()      : appelé à la fin de la séquence
+  function narrate(lines, langCode, gap, opts) {
+    if (!enabled || !('speechSynthesis' in window) || !lines || !lines.length) return;
+    opts = opts || {};
+    stopSpeech();
+    const my = ++seqId;
+    const code = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
+    const prefix = code.toLowerCase().slice(0, 2);
+    const pause = (gap == null) ? 350 : gap; // pause naturelle entre les lignes
+    whenVoicesReady(function () {
+      if (my !== seqId) return;            // une autre narration a démarré entre-temps
+      const v = pickVoice(prefix);
+      // Chrome met la synthèse en pause après ~15 s : on la relance si besoin
+      clearKeepAlive();
+      keepAlive = setInterval(function () {
+        try { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); } catch (e) {}
+      }, 4000);
+      const rate = effectiveRate();
+      let k = 0;
+      const next = function () {
+        if (my !== seqId) { clearKeepAlive(); return; }
+        if (k >= lines.length) { clearKeepAlive(); if (opts.onDone) try { opts.onDone(); } catch (e) {} return; }
+        const idx = k;
+        const text = String(lines[idx]);
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = code; if (v) u.voice = v;
+        u.rate = rate; u.pitch = 1.1; u.volume = 1;
+
+        let advanced = false;
+        let watchdog = null;
+        const advance = function () {
+          if (advanced || my !== seqId) return;
+          advanced = true;
+          if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+          k++; setTimeout(next, pause);
+        };
+        u.onstart = function () { if (my === seqId && opts.onLine) try { opts.onLine(idx); } catch (e) {} };
+        u.onend = advance;
+        u.onerror = advance; // un échec ne doit pas bloquer la suite
+        // garde-fou surlignage si onstart ne se déclenche pas
+        if (opts.onLine) setTimeout(function () { if (my === seqId && !advanced) try { opts.onLine(idx); } catch (e) {} }, 30);
+
+        // CHIEN DE GARDE : si onend ne se déclenche jamais (bug Chrome), on avance
+        // quand même après la durée estimée → aucune ligne « ratée »/bloquée.
+        const estMs = Math.max(1400, text.length * 130) / rate + 1400;
+        watchdog = setTimeout(advance, estMs);
+
+        try { window.speechSynthesis.speak(u); } catch (e) { advance(); }
+      };
+      // léger délai : laisse le cancel() initial se terminer (sinon 1re ligne perdue)
+      setTimeout(next, 140);
+    });
+  }
+
+  /* ---------- Reconnaissance vocale (Web Speech Recognition) ----------
+     Pour le jeu ORAL : l'enfant répond à voix haute. Nécessite micro +
+     contexte sécurisé (https/localhost) + Internet. Sinon onError. */
+  function canRecognize() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+
+  function listen(langCode, opts) {
+    opts = opts || {};
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { if (opts.onError) opts.onError('unsupported'); return null; }
+    let rec;
+    try { rec = new SR(); } catch (e) { if (opts.onError) opts.onError('unsupported'); return null; }
+    rec.lang = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
+    rec.interimResults = false;
+    rec.maxAlternatives = 5;       // plusieurs hypothèses → meilleure chance de matcher
+    rec.continuous = false;
+    rec.onresult = function (e) {
+      const alts = [];
+      const res = e.results && e.results[0];
+      if (res) for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
+      if (opts.onResult) opts.onResult(alts);
+    };
+    rec.onerror = function (e) { if (opts.onError) opts.onError((e && e.error) || 'error'); };
+    rec.onend = function () { if (opts.onEnd) opts.onEnd(); };
+    // coupe la voix de l'app pour ne pas qu'elle soit captée par le micro
+    cancel();
+    try { rec.start(); } catch (e) { if (opts.onError) opts.onError('start'); return null; }
+    return rec;
+  }
+
+  function setEnabled(v) { enabled = !!v; if (!enabled) stopSpeech(); }
+  function isEnabled() { return enabled; }
+
+  // Amorce le chargement des voix (à appeler sur la 1re interaction utilisateur)
+  function primeVoices() { whenVoicesReady(function () {}); }
+
+  window.MK.audio = {
+    playCorrect: playCorrect, playWrong: playWrong, playFanfare: playFanfare, playTick: playTick,
+    speak: speak, speakOperation: speakOperation, cancel: cancel,
+    narrate: narrate, stopSpeech: stopSpeech,
+    setEnabled: setEnabled, isEnabled: isEnabled, resume: ensureCtx,
+    primeVoices: primeVoices, hasVoice: hasVoice,
+    listVoices: listVoices, setPreferredVoice: setPreferredVoice, getPreferredVoice: getPreferredVoice,
+    setRate: setRate, getRate: getRate,
+    canRecognize: canRecognize, listen: listen,
+  };
+})();
+
+/* ============================================================
+   MultipliKids — engine.js
+   Logique pédagogique PURE : tables, questions, distracteurs, score.
+   Aucun effet de bord (pas de DOM, pas de localStorage).
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {};
+
+  // Tables disponibles par niveau pédagogique
+  const LEVEL_TABLES = {
+    1: [1, 2, 5, 10],
+    2: [3, 4, 6],
+    3: [7, 8, 9],
+    4: [11, 12],
+  };
+
+  // Jeux débloqués par niveau
+  const LEVEL_GAMES = {
+    1: ['flashcard'],
+    2: ['flashcard', 'quiz', 'memory'],
+    3: ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm'],
+    4: ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm'],
+  };
+
+  const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  // Entier aléatoire [min, max]
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  // Limite des multiplicateurs : les tables vont jusqu'à ×10 (leçons ET jeux)
+  const MAX_MULT = 10;
+
+  // Génère une question pour une table donnée (multiplicateur 1..10)
+  // table = null → table mixte (multiplications variées)
+  function makeQuestion(table) {
+    const a = (table && table >= 1) ? table : randInt(2, MAX_MULT);
+    const b = randInt(1, MAX_MULT);
+    return { a: a, b: b, answer: a * b };
+  }
+
+  // 3 distracteurs proches et plausibles + la bonne réponse
+  function makeDistractors(answer, a, b) {
+    const set = new Set([answer]);
+    // candidats : ±a, ±b, ±1, tables voisines
+    const candidates = [
+      answer + a, answer - a,
+      answer + b, answer - b,
+      answer + 1, answer - 1,
+      a * (b + 1), a * (b - 1),
+      (a + 1) * b, (a - 1) * b,
+    ];
+    const pool = shuffle(candidates);
+    for (let i = 0; i < pool.length && set.size < 4; i++) {
+      const v = pool[i];
+      if (v > 0 && v !== answer && !set.has(v)) set.add(v);
+    }
+    // complète si besoin avec des valeurs proches aléatoires
+    let guard = 0;
+    while (set.size < 4 && guard < 50) {
+      const v = answer + randInt(-6, 6);
+      if (v > 0 && !set.has(v)) set.add(v);
+      guard++;
+    }
+    return shuffle(Array.from(set));
+  }
+
+  // Question prête à l'emploi pour un QCM
+  function makeQuiz(table) {
+    const q = makeQuestion(table);
+    return { a: q.a, b: q.b, answer: q.answer, options: makeDistractors(q.answer, q.a, q.b) };
+  }
+
+  // Paires pour le jeu mémoire : n paires (opération ↔ résultat) sans résultats dupliqués
+  function makeMemoryPairs(table, count) {
+    const pairs = [];
+    const usedResults = new Set();
+    let guard = 0;
+    while (pairs.length < count && guard < 200) {
+      guard++;
+      const b = randInt(1, MAX_MULT);
+      const a = (table && table >= 1) ? table : randInt(2, MAX_MULT);
+      const res = a * b;
+      if (usedResults.has(res)) continue; // évite l'ambiguïté de matching
+      usedResults.add(res);
+      pairs.push({ a: a, b: b, result: res });
+    }
+    return pairs;
+  }
+
+  // Score : bonne réponse = +base, bonus vitesse si rapide
+  function scoreAnswer(correct, msElapsed, opts) {
+    opts = opts || {};
+    const base = opts.base || 10;
+    const speedBonusMax = opts.speedBonus || 5;
+    const fastThreshold = opts.fastMs || 3000;
+    if (!correct) return 0;
+    let pts = base;
+    if (msElapsed != null && msElapsed <= fastThreshold) pts += speedBonusMax;
+    return pts;
+  }
+
+  // Pourcentage de réussite
+  function pct(correct, total) {
+    if (!total) return 0;
+    return Math.round((correct / total) * 100);
+  }
+
+  // Message d'encouragement selon le score %
+  function encourageKey(percent) {
+    if (percent >= 80) return 'encourage_high';
+    if (percent >= 50) return 'encourage_mid';
+    return 'encourage_low';
+  }
+
+  function tablesForLevel(level) { return LEVEL_TABLES[level] || LEVEL_TABLES[1]; }
+  function gamesForLevel(level) { return LEVEL_GAMES[level] || LEVEL_GAMES[1]; }
+
+  // Niveau auquel appartient une table
+  function levelOfTable(table) {
+    for (const lvl of [1, 2, 3, 4]) {
+      if (LEVEL_TABLES[lvl].indexOf(table) !== -1) return lvl;
+    }
+    return 1;
+  }
+
+  /* ============================================================
+     RECONNAISSANCE DE NOMBRE PARLÉ (0–100), FR + GR.
+     Sert à valider la réponse orale de l'enfant (jeu Oral 🎤).
+     ============================================================ */
+
+  // Normalise : enlève accents (NFD), minuscule, tirets→espaces, garde lettres/chiffres
+  function normSpoken(s) {
+    return String(s == null ? '' : s)
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')   // retire tonos grec + accents fr
+      .toLowerCase()
+      .replace(/[-_]/g, ' ')
+      .replace(/[^a-z0-9α-ως\s]/gi, ' ')   // lettres latines/grecques + chiffres
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // Unités (variantes orthographiques), formes SANS accent
+  const EL_UNITS = [['μηδεν'], ['ενα', 'μια', 'ενας'], ['δυο'], ['τρια', 'τρεις'],
+    ['τεσσερα', 'τεσσερις'], ['πεντε'], ['εξι'], ['εφτα', 'επτα'], ['οχτω', 'οκτω'], ['εννια', 'εννεα']];
+  const EL_TEENS = { 10: ['δεκα'], 11: ['εντεκα', 'ενδεκα'], 12: ['δωδεκα'], 13: ['δεκατρια'],
+    14: ['δεκατεσσερα'], 15: ['δεκαπεντε'], 16: ['δεκαεξι'], 17: ['δεκαεφτα', 'δεκαεπτα'],
+    18: ['δεκαοχτω', 'δεκαοκτω'], 19: ['δεκαεννια', 'δεκαεννεα'] };
+  const EL_TENS = { 20: 'εικοσι', 30: 'τριαντα', 40: 'σαραντα', 50: 'πενηντα', 60: 'εξηντα', 70: 'εβδομηντα', 80: 'ογδοντα', 90: 'ενενηντα' };
+
+  const FR_UNITS = [['zero'], ['un'], ['deux'], ['trois'], ['quatre'], ['cinq'], ['six'], ['sept'], ['huit'], ['neuf']];
+  const FR_TEENS = { 10: ['dix'], 11: ['onze'], 12: ['douze'], 13: ['treize'], 14: ['quatorze'], 15: ['quinze'], 16: ['seize'], 17: ['dix sept'], 18: ['dix huit'], 19: ['dix neuf'] };
+  const FR_TENS = { 20: 'vingt', 30: 'trente', 40: 'quarante', 50: 'cinquante', 60: 'soixante' };
+
+  // Renvoie les formes écrites possibles d'un nombre (0..100) dans la langue
+  function numberWords(n, lang) {
+    if (lang === 'fr') return frWords(n);
+    return elWords(n);
+  }
+  function elWords(n) {
+    if (n <= 9) return EL_UNITS[n].slice();
+    if (n <= 19) return EL_TEENS[n].slice();
+    if (n === 100) return ['εκατο', 'εκατον'];
+    const t = Math.floor(n / 10) * 10, r = n % 10;
+    if (r === 0) return [EL_TENS[t]];
+    return EL_UNITS[r].map(function (u) { return EL_TENS[t] + ' ' + u; });
+  }
+  function frWords(n) {
+    if (n <= 9) return FR_UNITS[n].slice();
+    if (n <= 19) return FR_TEENS[n].slice();
+    if (n === 100) return ['cent'];
+    if (n < 70) {
+      const t = Math.floor(n / 10) * 10, r = n % 10;
+      if (r === 0) return [FR_TENS[t]];
+      if (r === 1) return [FR_TENS[t] + ' et un', FR_TENS[t] + ' un'];
+      return [FR_TENS[t] + ' ' + FR_UNITS[r][0]];
+    }
+    if (n < 80) { // 70–79 : soixante + 10..19
+      const forms = FR_TEENS[n - 60].map(function (x) { return 'soixante ' + x; });
+      if (n === 71) forms.push('soixante et onze');
+      return forms;
+    }
+    if (n === 80) return ['quatre vingts', 'quatre vingt'];
+    if (n < 90) return ['quatre vingt ' + FR_UNITS[n - 80][0]]; // 81..89
+    return FR_TEENS[n - 80].map(function (x) { return 'quatre vingt ' + x; }); // 90..99
+  }
+
+  // La réponse orale correspond-elle au résultat attendu ? (chiffres OU mots, tolérant aux accents)
+  function spokenMatchesAnswer(transcript, answer, lang) {
+    const norm = normSpoken(transcript);
+    if (!norm) return false;
+    // 1) chiffres détectés
+    const digits = norm.match(/\d+/g);
+    if (digits && digits.some(function (d) { return parseInt(d, 10) === answer; })) return true;
+    // 2) mots (comparaison par tokens → évite les faux positifs type « εξι » dans « δεκαεξι »)
+    const tokens = norm.split(' ');
+    const forms = numberWords(answer, lang).map(normSpoken);
+    for (let fi = 0; fi < forms.length; fi++) {
+      const f = forms[fi];
+      if (f.indexOf(' ') === -1) {
+        if (tokens.indexOf(f) !== -1) return true;
+        if (tokens.indexOf(f.replace(/ /g, '')) !== -1) return true;
+      } else {
+        if (tokens.indexOf(f.replace(/ /g, '')) !== -1) return true; // forme « collée »
+        const ft = f.split(' ');
+        for (let i = 0; i + ft.length <= tokens.length; i++) {
+          if (tokens.slice(i, i + ft.length).join(' ') === f) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  window.MK.engine = {
+    MAX_MULT: MAX_MULT,
+    ALL_TABLES: ALL_TABLES,
+    LEVEL_TABLES: LEVEL_TABLES,
+    LEVEL_GAMES: LEVEL_GAMES,
+    randInt: randInt,
+    shuffle: shuffle,
+    makeQuestion: makeQuestion,
+    makeDistractors: makeDistractors,
+    makeQuiz: makeQuiz,
+    makeMemoryPairs: makeMemoryPairs,
+    scoreAnswer: scoreAnswer,
+    pct: pct,
+    encourageKey: encourageKey,
+    tablesForLevel: tablesForLevel,
+    gamesForLevel: gamesForLevel,
+    levelOfTable: levelOfTable,
+    numberWords: numberWords,
+    spokenMatchesAnswer: spokenMatchesAnswer,
+  };
+})();
+
+/* ============================================================
+   MultipliKids — progress.js
+   Persistance localStorage : XP, niveaux, badges, streak.
+   Toujours protégé par try/catch (mode privé).
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {};
+
+  const KEY = 'multiplikids_progress';
+
+  // Définition des badges (id → table associée ou condition spéciale)
+  const BADGE_DEFS = [
+    { id: 'table1_star', table: 1 }, { id: 'table2_star', table: 2 },
+    { id: 'table3_star', table: 3 }, { id: 'table4_star', table: 4 },
+    { id: 'table5_star', table: 5 }, { id: 'table6_star', table: 6 },
+    { id: 'table7_star', table: 7 }, { id: 'table8_star', table: 8 },
+    { id: 'table9_star', table: 9 }, { id: 'table10_star', table: 10 },
+    { id: 'table11_star', table: 11 }, { id: 'table12_star', table: 12 },
+    { id: 'speed_demon', special: 'speed' },     // bonus vitesse atteint
+    { id: 'streak_3', special: 'streak3' },        // 3 jours de suite
+    { id: 'first_win', special: 'first' },          // 1re session réussie
+  ];
+
+  function defaultState() {
+    return {
+      level: 1,
+      xp: 0,
+      tables: {},           // { "2": { sessions, avgScore, recentScores:[], mastered } }
+      badges: [],
+      streak: 0,
+      lastPlayDay: null,    // 'YYYY-MM-DD'
+      lang: (MK.i18n ? MK.i18n.getLang() : 'el'),
+      freeMode: true,       // DÉFAUT : toutes les tables/jeux accessibles (mode libre)
+    };
+  }
+
+  let state = defaultState();
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state = Object.assign(defaultState(), parsed);
+        state.tables = state.tables || {};
+        state.badges = state.badges || [];
+      }
+    } catch (e) { state = defaultState(); }
+    return state;
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function get() { return state; }
+
+  // Date locale 'YYYY-MM-DD'
+  function todayStr() {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  function addXP(amount) {
+    state.xp += Math.max(0, amount | 0);
+    save();
+    return state.xp;
+  }
+
+  // Met à jour le streak journalier en début de session
+  function touchStreak() {
+    const today = todayStr();
+    if (state.lastPlayDay === today) return state.streak;
+    // jour précédent ?
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const ym = String(y.getMonth() + 1).padStart(2, '0');
+    const yd = String(y.getDate()).padStart(2, '0');
+    const yesterday = y.getFullYear() + '-' + ym + '-' + yd;
+    if (state.lastPlayDay === yesterday) state.streak += 1;
+    else state.streak = 1;
+    state.lastPlayDay = today;
+    if (state.streak >= 3) unlockBadge('streak_3');
+    save();
+    return state.streak;
+  }
+
+  // Enregistre le résultat d'une session sur une table
+  // result = { table, percent, speedBonus:bool }
+  // Retourne la liste des badges nouvellement débloqués.
+  function recordSession(result) {
+    const tk = String(result.table);
+    const T = state.tables[tk] || { sessions: 0, avgScore: 0, recentScores: [], mastered: false };
+    T.sessions += 1;
+    T.recentScores = (T.recentScores || []).concat(result.percent).slice(-3);
+    // moyenne globale lissée
+    T.avgScore = Math.round(((T.avgScore * (T.sessions - 1)) + result.percent) / T.sessions);
+
+    const newBadges = [];
+
+    // Maîtrise : 80% sur les 3 dernières sessions consécutives
+    if (!T.mastered && T.recentScores.length >= 3 && T.recentScores.every(function (s) { return s >= 80; })) {
+      T.mastered = true;
+      const b = 'table' + result.table + '_star';
+      if (unlockBadge(b)) newBadges.push(b);
+    }
+    state.tables[tk] = T;
+
+    // Première victoire
+    if (result.percent >= 50 && unlockBadge('first_win')) newBadges.push('first_win');
+    // Démon de vitesse
+    if (result.speedBonus && unlockBadge('speed_demon')) newBadges.push('speed_demon');
+    if (state.streak >= 3 && unlockBadge('streak_3')) newBadges.push('streak_3');
+
+    recomputeLevel();
+    save();
+    return newBadges;
+  }
+
+  function unlockBadge(id) {
+    if (state.badges.indexOf(id) === -1) { state.badges.push(id); return true; }
+    return false;
+  }
+
+  function hasBadge(id) { return state.badges.indexOf(id) !== -1; }
+
+  // Déblocage de niveau : toutes les tables du niveau courant maîtrisées → niveau+1
+  function recomputeLevel() {
+    for (let lvl = 1; lvl <= 4; lvl++) {
+      const tables = MK.engine.LEVEL_TABLES[lvl];
+      const allMastered = tables.every(function (t) {
+        const T = state.tables[String(t)];
+        return T && T.mastered;
+      });
+      if (allMastered && state.level < lvl + 1 && lvl < 4) state.level = lvl + 1;
+      if (!allMastered) break;
+    }
+    if (state.level > 4) state.level = 4;
+  }
+
+  function isLevelUnlocked(level) { return state.freeMode || level <= state.level; }
+  function isTableUnlocked(table) {
+    if (state.freeMode) return true;
+    const lvl = MK.engine.levelOfTable(table);
+    return isLevelUnlocked(lvl);
+  }
+
+  function getFreeMode() { return !!state.freeMode; }
+  function setFreeMode(v) { state.freeMode = !!v; save(); }
+
+  // Étoiles 0..3 pour une table (selon avgScore)
+  function starsForTable(table) {
+    const T = state.tables[String(table)];
+    if (!T) return 0;
+    if (T.mastered || T.avgScore >= 90) return 3;
+    if (T.avgScore >= 70) return 2;
+    if (T.avgScore >= 40 || T.sessions > 0) return 1;
+    return 0;
+  }
+
+  function tablePercent(table) {
+    const T = state.tables[String(table)];
+    return T ? T.avgScore : 0;
+  }
+
+  function masteredCount() {
+    return Object.keys(state.tables).filter(function (k) { return state.tables[k].mastered; }).length;
+  }
+
+  function reset() {
+    state = defaultState();
+    save();
+  }
+
+  window.MK.progress = {
+    BADGE_DEFS: BADGE_DEFS,
+    load: load, save: save, get: get,
+    addXP: addXP,
+    touchStreak: touchStreak,
+    recordSession: recordSession,
+    unlockBadge: unlockBadge, hasBadge: hasBadge,
+    isLevelUnlocked: isLevelUnlocked, isTableUnlocked: isTableUnlocked,
+    getFreeMode: getFreeMode, setFreeMode: setFreeMode,
+    starsForTable: starsForTable, tablePercent: tablePercent,
+    masteredCount: masteredCount,
+    reset: reset,
+  };
+})();
+
+/* ============================================================
+   MultipliKids — visual.js
+   Confettis (canvas vanilla), shake, toast badge, décor de fond.
+   Respecte prefers-reduced-motion.
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {};
+
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let canvas = null, ctx = null, particles = [], rafId = null;
+
+  function ensureCanvas() {
+    if (canvas) return;
+    canvas = document.createElement('canvas');
+    canvas.id = 'confetti-canvas';
+    document.body.appendChild(canvas);
+    ctx = canvas.getContext('2d');
+    resize();
+    window.addEventListener('resize', resize);
+  }
+
+  function resize() {
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  const COLORS = ['#FF6B35', '#4ECDC4', '#FFE66D', '#06D6A0', '#EF476F', '#fff'];
+
+  // Lance une explosion de confettis
+  function confetti(count) {
+    if (reduced) return;
+    ensureCanvas();
+    count = count || 90;
+    const cx = window.innerWidth / 2;
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: cx + (Math.random() - 0.5) * 200,
+        y: window.innerHeight * 0.35,
+        vx: (Math.random() - 0.5) * 9,
+        vy: Math.random() * -10 - 4,
+        size: Math.random() * 8 + 4,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        rot: Math.random() * Math.PI,
+        vrot: (Math.random() - 0.5) * 0.3,
+        life: 1,
+      });
+    }
+    if (!rafId) loop();
+  }
+
+  function loop() {
+    rafId = requestAnimationFrame(loop);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const grav = 0.35;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.vy += grav;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vrot;
+      p.life -= 0.008;
+      if (p.life <= 0 || p.y > canvas.height + 30) { particles.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    }
+    if (particles.length === 0) { cancelAnimationFrame(rafId); rafId = null; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+
+  // Effet shake sur un élément
+  function shake(el) {
+    if (!el || reduced) return;
+    el.classList.remove('shake');
+    void el.offsetWidth; // reflow pour relancer l'animation
+    el.classList.add('shake');
+    setTimeout(function () { el.classList.remove('shake'); }, 450);
+  }
+
+  // Toast "badge débloqué"
+  let toastEl = null, toastTimer = null;
+  function toast(msg) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.id = 'toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2600);
+  }
+
+  // Génère le décor de fond selon le thème
+  function buildDecor(theme) {
+    const host = document.getElementById('bg-decor');
+    if (!host) return;
+    host.innerHTML = '';
+    if (reduced) return;
+    if (theme === 'ocean') {
+      for (let i = 0; i < 18; i++) {
+        const b = document.createElement('div');
+        b.className = 'bubble';
+        const s = Math.random() * 26 + 8;
+        b.style.width = s + 'px'; b.style.height = s + 'px';
+        b.style.left = (Math.random() * 100) + '%';
+        b.style.animationDuration = (Math.random() * 8 + 6) + 's';
+        b.style.animationDelay = (Math.random() * 6) + 's';
+        host.appendChild(b);
+      }
+    } else if (theme === 'jungle') {
+      const leaves = ['🍃', '🌿', '🍀'];
+      for (let i = 0; i < 14; i++) {
+        const l = document.createElement('div');
+        l.className = 'leaf';
+        l.textContent = leaves[i % leaves.length];
+        l.style.left = (Math.random() * 100) + '%';
+        l.style.top = (Math.random() * 100) + '%';
+        l.style.animationDuration = (Math.random() * 4 + 3) + 's';
+        l.style.animationDelay = (Math.random() * 4) + 's';
+        host.appendChild(l);
+      }
+    } else { // space
+      for (let i = 0; i < 60; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = (Math.random() * 100) + '%';
+        s.style.top = (Math.random() * 100) + '%';
+        const sc = Math.random() * 1.6 + 0.4;
+        s.style.transform = 'scale(' + sc + ')';
+        s.style.animationDelay = (Math.random() * 3) + 's';
+        host.appendChild(s);
+      }
+    }
+  }
+
+  window.MK.visual = { confetti: confetti, shake: shake, toast: toast, buildDecor: buildDecor, reduced: reduced };
+})();
+
+/* ============================================================
+   MultipliKids — games/flashcard.js
+   Cartes flash avec flip 3D + répétition espacée simple (3 niveaux).
+   Contrat : new Flashcard(host, {table, level, onFinish}) → start() / stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+
+  class Flashcard {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.onFinish = opts.onFinish || function () {};
+      this.deck = [];          // {a,b,answer,mastery}
+      this.index = 0;
+      this.flipped = false;
+      this.correct = 0;
+      this.total = 0;
+      this.speedBonus = false;
+    }
+
+    buildDeck() {
+      this.deck = [];
+      for (let b = 1; b <= 12; b++) {
+        this.deck.push({ a: this.table, b: b, answer: this.table * b, mastery: 0 });
+      }
+      this.deck = MK.engine.shuffle(this.deck);
+    }
+
+    start() {
+      this.buildDeck();
+      this.index = 0;
+      this.render();
+    }
+
+    current() { return this.deck[this.index]; }
+
+    render() {
+      const c = this.current();
+      if (!c) { this.finish(); return; }
+      this.flipped = false;
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span>' + t('table_of') + ' ' + this.table + '</span>' +
+            '<span class="score">' + (this.index + 1) + ' / ' + this.deck.length + '</span>' +
+          '</div>' +
+          '<p class="center" style="color:var(--color-text-dim)">' + t('tap_to_flip') + '</p>' +
+          '<div class="flashcard-wrap">' +
+            '<div class="flashcard" id="fc-card" role="button" tabindex="0" aria-label="' + c.a + ' × ' + c.b + '">' +
+              '<div class="face front">' + c.a + ' × ' + c.b + ' = ?</div>' +
+              '<div class="face back">' + c.answer + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="center"><button class="btn btn--ghost" id="fc-repeat" aria-label="' + t('btn_repeat') + '">' + t('btn_repeat') + '</button></div>' +
+          '<div class="row mt" id="fc-actions"></div>' +
+        '</div>';
+
+      const card = this.host.querySelector('#fc-card');
+      const flip = () => this.flip();
+      card.addEventListener('click', flip);
+      card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+      this.host.querySelector('#fc-repeat').addEventListener('click', () => {
+        MK.audio.speakOperation(c.a, c.b, this.flipped ? c.answer : undefined);
+      });
+      // prononce l'opération à l'apparition
+      MK.audio.speakOperation(c.a, c.b);
+    }
+
+    flip() {
+      if (this.flipped) return;
+      this.flipped = true;
+      const c = this.current();
+      const card = this.host.querySelector('#fc-card');
+      card.classList.add('flipped');
+      MK.audio.speakOperation(c.a, c.b, c.answer);
+      // affiche les boutons d'auto-évaluation
+      const actions = this.host.querySelector('#fc-actions');
+      actions.innerHTML =
+        '<button class="btn btn--secondary" id="fc-knew">' + t('btn_knew') + '</button>' +
+        '<button class="btn btn--ghost" id="fc-didnt">' + t('btn_didnt') + '</button>';
+      actions.querySelector('#fc-knew').addEventListener('click', () => this.answer(true));
+      actions.querySelector('#fc-didnt').addEventListener('click', () => this.answer(false));
+    }
+
+    answer(knew) {
+      const c = this.current();
+      this.total++;
+      if (knew) {
+        this.correct++;
+        c.mastery = Math.min(3, c.mastery + 1);
+        MK.audio.playCorrect();
+        MK.progress.addXP(10);
+      } else {
+        c.mastery = 0;
+        MK.audio.playWrong();
+        // répétition espacée : la carte ratée revient plus tard dans le deck
+        this.deck.push(Object.assign({}, c));
+      }
+      this.index++;
+      this.render();
+    }
+
+    finish() {
+      const percent = MK.engine.pct(this.correct, this.total);
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">' + t('level_done') + '</h2>' +
+          '<p class="celebrate" style="font-size:2rem">' + this.correct + ' / ' + this.total + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="fc-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#fc-again').addEventListener('click', () => this.start());
+      if (percent >= 80) MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.correct, total: this.total, percent: percent, speedBonus: this.speedBonus });
+    }
+
+    stop() { /* rien à nettoyer (pas de timer) */ }
+  }
+
+  MK.games.Flashcard = Flashcard;
+})();
+
+/* ============================================================
+   MultipliKids — games/quiz.js
+   QCM chronométré : 10 questions, chrono 10s, 4 réponses.
+   Contrat : new Quiz(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+
+  const TOTAL_Q = 10;
+  const TIME_MS = 10000;
+
+  class Quiz {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.onFinish = opts.onFinish || function () {};
+      this.qIndex = 0;
+      this.correct = 0;
+      this.score = 0;
+      this.speedBonus = false;
+      this.timer = null;
+      this.tStart = 0;
+      this.locked = false;
+    }
+
+    start() {
+      this.qIndex = 0; this.correct = 0; this.score = 0; this.speedBonus = false;
+      this.next();
+    }
+
+    next() {
+      if (this.qIndex >= TOTAL_Q) { this.finish(); return; }
+      this.locked = false;
+      this.q = MK.engine.makeQuiz(this.table);
+      this.render();
+      this.startTimer();
+      MK.audio.speakOperation(this.q.a, this.q.b);
+    }
+
+    render() {
+      const opts = this.q.options.map(function (o) {
+        return '<button class="answer-btn" data-v="' + o + '">' + o + '</button>';
+      }).join('');
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span>' + t('table_of') + ' ' + this.table + '</span>' +
+            '<span class="score">' + t('score') + ' : ' + this.score + '</span>' +
+          '</div>' +
+          '<div class="bar" id="q-bar"><span></span></div>' +
+          '<div class="question-big">' + this.q.a + ' × ' + this.q.b + ' = ?</div>' +
+          '<div class="center" style="margin-bottom:10px"><button class="btn btn--ghost" id="q-repeat" aria-label="' + t('btn_repeat') + '">' + t('btn_repeat') + '</button></div>' +
+          '<div class="answers" id="q-answers">' + opts + '</div>' +
+          '<div class="feedback" id="q-fb" role="status"></div>' +
+          '<div class="game-hud"><span class="score">' + (this.qIndex + 1) + ' / ' + TOTAL_Q + '</span></div>' +
+        '</div>';
+
+      const self = this;
+      this.host.querySelectorAll('.answer-btn').forEach(function (b) {
+        b.addEventListener('click', function () { self.choose(parseInt(b.dataset.v, 10), b); });
+      });
+      this.host.querySelector('#q-repeat').addEventListener('click', function () {
+        MK.audio.speakOperation(self.q.a, self.q.b);
+      });
+    }
+
+    startTimer() {
+      this.tStart = performance.now();
+      const bar = this.host.querySelector('#q-bar > span');
+      const barWrap = this.host.querySelector('#q-bar');
+      const self = this;
+      const tick = function () {
+        const elapsed = performance.now() - self.tStart;
+        const ratio = Math.max(0, 1 - elapsed / TIME_MS);
+        if (bar) bar.style.width = (ratio * 100) + '%';
+        if (barWrap && ratio < 0.3) barWrap.classList.add('bar--danger');
+        if (ratio <= 0) { self.timeUp(); return; }
+        self.timer = requestAnimationFrame(tick);
+      };
+      this.timer = requestAnimationFrame(tick);
+    }
+
+    clearTimer() { if (this.timer) { cancelAnimationFrame(this.timer); this.timer = null; } }
+
+    choose(value, btn) {
+      if (this.locked) return;
+      this.locked = true;
+      this.clearTimer();
+      const elapsed = performance.now() - this.tStart;
+      const ok = value === this.q.answer;
+      const fb = this.host.querySelector('#q-fb');
+
+      if (ok) {
+        btn.classList.add('correct');
+        const pts = MK.engine.scoreAnswer(true, elapsed);
+        this.score += pts; this.correct++;
+        if (pts > 10) this.speedBonus = true;
+        MK.progress.addXP(pts);
+        fb.textContent = t('correct'); fb.className = 'feedback ok celebrate';
+        MK.audio.playCorrect();
+      } else {
+        btn.classList.add('wrong');
+        // surligne la bonne réponse
+        this.host.querySelectorAll('.answer-btn').forEach((b) => {
+          if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct');
+        });
+        fb.textContent = t('wrong'); fb.className = 'feedback ko';
+        MK.visual.shake(this.host.querySelector('.game-stage'));
+        MK.audio.playWrong();
+      }
+      this.qIndex++;
+      setTimeout(() => this.next(), 1200);
+    }
+
+    timeUp() {
+      if (this.locked) return;
+      this.locked = true;
+      this.clearTimer();
+      const fb = this.host.querySelector('#q-fb');
+      if (fb) { fb.textContent = t('time_up'); fb.className = 'feedback ko'; }
+      this.host.querySelectorAll('.answer-btn').forEach((b) => {
+        if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct');
+      });
+      MK.audio.playWrong();
+      this.qIndex++;
+      setTimeout(() => this.next(), 1200);
+    }
+
+    finish() {
+      const percent = MK.engine.pct(this.correct, TOTAL_Q);
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">' + t('game_over') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.6rem">' + t('your_score') + ' : ' + this.score + '</p>' +
+          '<p>' + this.correct + ' / ' + TOTAL_Q + ' — ' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="q-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#q-again').addEventListener('click', () => this.start());
+      if (percent >= 80) MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.correct, total: TOTAL_Q, percent: percent, speedBonus: this.speedBonus });
+    }
+
+    stop() { this.clearTimer(); }
+  }
+
+  MK.games.Quiz = Quiz;
+})();
+
+/* ============================================================
+   MultipliKids — games/memory.js
+   Jeu mémoire : associer une opération (6×7) à son résultat (42).
+   Tailles : 3×4 (6 paires) / 4×4 (8 paires) / 4×6 (12 paires) selon niveau.
+   Contrat : new Memory(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+
+  // niveau → nombre de paires + colonnes
+  const SIZES = { 1: { pairs: 6, cols: 4 }, 2: { pairs: 6, cols: 4 }, 3: { pairs: 8, cols: 4 }, 4: { pairs: 12, cols: 4 } };
+
+  class Memory {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.level = opts.level || 1;
+      this.onFinish = opts.onFinish || function () {};
+      this.cards = [];
+      this.first = null;
+      this.lock = false;
+      this.matched = 0;
+      this.moves = 0;
+    }
+
+    start() {
+      const conf = SIZES[this.level] || SIZES[1];
+      const pairs = MK.engine.makeMemoryPairs(this.table, conf.pairs);
+      this.totalPairs = pairs.length;
+      this.matched = 0; this.moves = 0; this.first = null; this.lock = false;
+      // construit les cartes : pour chaque paire, une carte "op" et une carte "résultat"
+      const cards = [];
+      pairs.forEach(function (p, i) {
+        cards.push({ id: i, kind: 'op', label: p.a + '×' + p.b, key: p.result });
+        cards.push({ id: i, kind: 'res', label: String(p.result), key: p.result });
+      });
+      this.cards = MK.engine.shuffle(cards);
+      this.cols = conf.cols;
+      this.render();
+    }
+
+    render() {
+      const cells = this.cards.map((c, idx) =>
+        '<div class="mem-card" data-idx="' + idx + '" role="button" tabindex="0" aria-label="' + t('find_pair') + '"><span class="face">?</span></div>'
+      ).join('');
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span>' + t('find_pair') + '</span>' +
+            '<span class="score">' + this.matched + ' / ' + this.totalPairs + '</span>' +
+          '</div>' +
+          '<div class="memory-grid" id="mem-grid" style="grid-template-columns:repeat(' + this.cols + ',1fr)">' + cells + '</div>' +
+        '</div>';
+      const self = this;
+      this.host.querySelectorAll('.mem-card').forEach(function (el) {
+        const fn = function () { self.flip(parseInt(el.dataset.idx, 10), el); };
+        el.addEventListener('click', fn);
+        el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
+      });
+    }
+
+    flip(idx, el) {
+      if (this.lock) return;
+      const card = this.cards[idx];
+      if (el.classList.contains('matched') || el.classList.contains('flipped')) return;
+      el.classList.add('flipped');
+      el.querySelector('.face').textContent = card.label;
+      if (card.kind === 'op') MK.audio.speakOperation(parseInt(card.label.split('×')[0], 10), parseInt(card.label.split('×')[1], 10));
+
+      if (!this.first) { this.first = { idx: idx, el: el, card: card }; return; }
+
+      // 2e carte
+      this.moves++;
+      const a = this.first, b = { idx: idx, el: el, card: card };
+      const isPair = (a.card.id === b.card.id) && (a.card.kind !== b.card.kind);
+      this.first = null;
+
+      if (isPair) {
+        a.el.classList.add('matched'); b.el.classList.add('matched');
+        this.matched++;
+        MK.audio.playCorrect();
+        MK.progress.addXP(10);
+        this.updateCounter();
+        if (this.matched === this.totalPairs) setTimeout(() => this.finish(), 600);
+      } else {
+        this.lock = true;
+        MK.audio.playWrong();
+        setTimeout(() => {
+          [a, b].forEach(function (x) {
+            x.el.classList.remove('flipped');
+            x.el.querySelector('.face').textContent = '?';
+          });
+          this.lock = false;
+        }, 900);
+      }
+    }
+
+    updateCounter() {
+      const s = this.host.querySelector('.score');
+      if (s) s.textContent = this.matched + ' / ' + this.totalPairs;
+    }
+
+    finish() {
+      // score % basé sur l'efficacité (paires / coups)
+      const percent = Math.min(100, Math.round((this.totalPairs / Math.max(this.moves, this.totalPairs)) * 100));
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">' + t('level_done') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.6rem">👏 ' + this.totalPairs + ' / ' + this.totalPairs + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="mem-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#mem-again').addEventListener('click', () => this.start());
+      MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.totalPairs, total: this.totalPairs, percent: percent, speedBonus: false });
+    }
+
+    stop() { /* pas de timer */ }
+  }
+
+  MK.games.Memory = Memory;
+})();
+
+/* ============================================================
+   MultipliKids — games/rocket.js
+   La fusée monte si bonne réponse, descend si mauvaise.
+   3 vies (étoiles). Boss final : 10 questions en 60 secondes.
+   Contrat : new Rocket(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+
+  const GOAL = 10;          // questions pour gagner
+  const TIME_LIMIT = 60000; // boss : 60s
+
+  class Rocket {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.onFinish = opts.onFinish || function () {};
+      this.lives = 3;
+      this.correct = 0;
+      this.answered = 0;
+      this.altitude = 10;   // % depuis le bas
+      this.locked = false;
+      this.speedBonus = false;
+      this.deadline = 0;
+      this.raf = null;
+    }
+
+    start() {
+      this.lives = 3; this.correct = 0; this.answered = 0; this.altitude = 10;
+      this.speedBonus = false; this.locked = false;
+      this.deadline = performance.now() + TIME_LIMIT;
+      this.renderShell();
+      this.loopTimer();
+      this.next();
+    }
+
+    renderShell() {
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span class="lives" id="rk-lives"></span>' +
+            '<span>' + t('boss') + '</span>' +
+            '<span class="score" id="rk-time"></span>' +
+          '</div>' +
+          '<div class="rocket-field" id="rk-field">' +
+            '<div class="rocket" id="rk-rocket" style="bottom:10%">🚀</div>' +
+          '</div>' +
+          '<div class="question-big" id="rk-q"></div>' +
+          '<div class="answers" id="rk-answers"></div>' +
+          '<div class="feedback" id="rk-fb" role="status"></div>' +
+        '</div>';
+      // étoiles de fond dans le champ
+      const field = this.host.querySelector('#rk-field');
+      for (let i = 0; i < 24; i++) {
+        const s = document.createElement('div');
+        s.style.position = 'absolute';
+        s.style.width = '2px'; s.style.height = '2px'; s.style.background = '#fff';
+        s.style.left = (Math.random() * 100) + '%'; s.style.top = (Math.random() * 100) + '%';
+        s.style.opacity = (Math.random() * 0.7 + 0.2);
+        field.appendChild(s);
+      }
+      this.updateLives();
+    }
+
+    updateLives() {
+      const el = this.host.querySelector('#rk-lives');
+      if (el) el.textContent = '⭐'.repeat(this.lives) + '✩'.repeat(3 - this.lives);
+    }
+
+    loopTimer() {
+      const self = this;
+      const tick = function () {
+        const left = Math.max(0, self.deadline - performance.now());
+        const el = self.host.querySelector('#rk-time');
+        if (el) el.textContent = '⏱ ' + Math.ceil(left / 1000) + 's';
+        if (left <= 0) { self.end(false); return; }
+        self.raf = requestAnimationFrame(tick);
+      };
+      this.raf = requestAnimationFrame(tick);
+    }
+
+    next() {
+      if (this.correct >= GOAL) { this.end(true); return; }
+      if (this.lives <= 0) { this.end(false); return; }
+      this.locked = false;
+      this.q = MK.engine.makeQuiz(this.table);
+      this.tStart = performance.now();
+      const qEl = this.host.querySelector('#rk-q');
+      qEl.textContent = this.q.a + ' × ' + this.q.b + ' = ?';
+      const ans = this.host.querySelector('#rk-answers');
+      ans.innerHTML = this.q.options.map(function (o) {
+        return '<button class="answer-btn" data-v="' + o + '">' + o + '</button>';
+      }).join('');
+      const self = this;
+      ans.querySelectorAll('.answer-btn').forEach(function (b) {
+        b.addEventListener('click', function () { self.choose(parseInt(b.dataset.v, 10), b); });
+      });
+      MK.audio.speakOperation(this.q.a, this.q.b);
+    }
+
+    setAltitude(pct) {
+      this.altitude = Math.max(2, Math.min(92, pct));
+      const r = this.host.querySelector('#rk-rocket');
+      if (r) r.style.bottom = this.altitude + '%';
+    }
+
+    choose(value, btn) {
+      if (this.locked) return;
+      this.locked = true;
+      const elapsed = performance.now() - this.tStart;
+      const ok = value === this.q.answer;
+      const fb = this.host.querySelector('#rk-fb');
+      this.answered++;
+
+      if (ok) {
+        btn.classList.add('correct');
+        this.correct++;
+        const pts = MK.engine.scoreAnswer(true, elapsed);
+        if (pts > 10) this.speedBonus = true;
+        MK.progress.addXP(pts);
+        this.setAltitude(this.altitude + 9);
+        fb.textContent = t('correct'); fb.className = 'feedback ok';
+        MK.audio.playCorrect();
+      } else {
+        btn.classList.add('wrong');
+        this.lives--;
+        this.updateLives();
+        this.setAltitude(this.altitude - 12);
+        fb.textContent = t('wrong'); fb.className = 'feedback ko';
+        MK.visual.shake(this.host.querySelector('#rk-field'));
+        MK.audio.playWrong();
+      }
+      setTimeout(() => this.next(), 800);
+    }
+
+    end(win) {
+      this.stop();
+      const percent = MK.engine.pct(this.correct, Math.max(this.answered, GOAL));
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">' + (win ? '🏆 ' + t('level_done') : t('game_over')) + '</h2>' +
+          '<p class="celebrate" style="font-size:2rem">🚀 ' + this.correct + ' / ' + GOAL + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="rk-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#rk-again').addEventListener('click', () => this.start());
+      if (win) MK.visual.confetti(140);
+      this.onFinish({ table: this.table, correct: this.correct, total: Math.max(this.answered, GOAL), percent: percent, speedBonus: this.speedBonus });
+    }
+
+    stop() { if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; } }
+  }
+
+  MK.games.Rocket = Rocket;
+})();
+
+/* ============================================================
+   MultipliKids — games/rhythm.js
+   Des réponses tombent du haut ; taper la bonne avant la ligne.
+   Vitesse augmente avec le niveau. Tap (mobile) + click (desktop).
+   Contrat : new Rhythm(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+
+  const ROUNDS = 10;
+
+  class Rhythm {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.level = opts.level || 3;
+      this.onFinish = opts.onFinish || function () {};
+      this.round = 0;
+      this.correct = 0;
+      this.lives = 3;
+      this.speedBonus = false;
+      this.raf = null;
+      this.tiles = [];          // {el, value, y, speed, correct}
+      this.fieldH = 360;
+      this.locked = false;
+    }
+
+    start() {
+      this.round = 0; this.correct = 0; this.lives = 3; this.speedBonus = false; this.locked = false;
+      this.renderShell();
+      this.nextRound();
+      this.loop();
+    }
+
+    renderShell() {
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span class="lives" id="ry-lives"></span>' +
+            '<span id="ry-q"></span>' +
+            '<span class="score" id="ry-score">0</span>' +
+          '</div>' +
+          '<p class="center" style="color:var(--color-text-dim)">' + t('tap_correct') + '</p>' +
+          '<div class="rhythm-field" id="ry-field"><div class="rhythm-hitline"></div></div>' +
+        '</div>';
+      this.field = this.host.querySelector('#ry-field');
+      this.fieldH = this.field.clientHeight || 360;
+      this.updateLives();
+    }
+
+    updateLives() {
+      const el = this.host.querySelector('#ry-lives');
+      if (el) el.textContent = '❤'.repeat(this.lives) + '♡'.repeat(3 - this.lives);
+      const sc = this.host.querySelector('#ry-score');
+      if (sc) sc.textContent = String(this.correct);
+    }
+
+    nextRound() {
+      if (this.round >= ROUNDS || this.lives <= 0) { this.finish(); return; }
+      this.round++;
+      this.locked = false;
+      // nettoie les tuiles précédentes
+      this.tiles.forEach((ti) => ti.el.remove());
+      this.tiles = [];
+
+      this.q = MK.engine.makeQuiz(this.table);
+      this.host.querySelector('#ry-q').textContent = this.q.a + ' × ' + this.q.b;
+      MK.audio.speakOperation(this.q.a, this.q.b);
+
+      // vitesse : croît avec le niveau et le round (ralentie pour les enfants)
+      const baseSpeed = 0.4 + (this.level * 0.08) + (this.round * 0.03); // px par frame approx (×60fps)
+      const cols = this.q.options.length;
+      const colW = 100 / cols;
+      const self = this;
+      this.q.options.forEach(function (val, i) {
+        const el = document.createElement('div');
+        el.className = 'rhythm-target';
+        el.textContent = val;
+        el.style.left = (i * colW + colW / 2) + '%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.top = '-40px';
+        self.field.appendChild(el);
+        const tile = { el: el, value: val, y: -40, speed: baseSpeed * (1 + Math.random() * 0.15), correct: val === self.q.answer, dead: false };
+        el.addEventListener('click', function () { self.hit(tile); });
+        self.tiles.push(tile);
+      });
+    }
+
+    loop() {
+      const self = this;
+      const limit = this.fieldH - 56; // ligne de frappe
+      const step = function () {
+        if (!self.locked) {
+          let allPast = self.tiles.length > 0;
+          self.tiles.forEach(function (ti) {
+            if (ti.dead) return;
+            ti.y += ti.speed * 1.5;
+            ti.el.style.top = ti.y + 'px';
+            if (ti.y < limit) allPast = false;
+          });
+          // si toutes les tuiles ont dépassé la ligne sans frappe correcte → vie perdue
+          if (allPast && self.tiles.length) self.miss();
+        }
+        self.raf = requestAnimationFrame(step);
+      };
+      this.raf = requestAnimationFrame(step);
+    }
+
+    hit(tile) {
+      if (this.locked || tile.dead) return;
+      if (tile.correct) {
+        this.locked = true;
+        tile.el.classList.add('correct');
+        tile.el.style.background = 'var(--color-success)';
+        this.correct++;
+        MK.audio.playCorrect();
+        const pts = (tile.y < this.fieldH * 0.6) ? 15 : 10; // frappe tôt = bonus
+        if (pts > 10) this.speedBonus = true;
+        MK.progress.addXP(pts);
+        this.updateLives();
+        setTimeout(() => this.nextRound(), 450);
+      } else {
+        tile.dead = true;
+        tile.el.style.opacity = '0.2';
+        this.lives--;
+        MK.audio.playWrong();
+        MK.visual.shake(this.field);
+        this.updateLives();
+        if (this.lives <= 0) { this.locked = true; setTimeout(() => this.finish(), 500); }
+      }
+    }
+
+    miss() {
+      if (this.locked) return;
+      this.locked = true;
+      this.lives--;
+      MK.audio.playWrong();
+      this.updateLives();
+      setTimeout(() => { (this.lives <= 0) ? this.finish() : this.nextRound(); }, 500);
+    }
+
+    finish() {
+      this.stop();
+      const percent = MK.engine.pct(this.correct, ROUNDS);
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">' + (this.lives > 0 ? '🎵 ' + t('level_done') : t('game_over')) + '</h2>' +
+          '<p class="celebrate" style="font-size:1.8rem">' + this.correct + ' / ' + ROUNDS + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="ry-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#ry-again').addEventListener('click', () => this.start());
+      if (percent >= 80) MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.correct, total: ROUNDS, percent: percent, speedBonus: this.speedBonus });
+    }
+
+    stop() {
+      if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+      this.tiles.forEach((ti) => { if (ti.el && ti.el.remove) ti.el.remove(); });
+      this.tiles = [];
+    }
+  }
+
+  MK.games.Rhythm = Rhythm;
+})();
+
+/* ============================================================
+   MultipliKids — games/speak.js
+   Jeu ORAL 🎤 : l'enfant RÉPOND À VOIX HAUTE (dans sa langue).
+   L'app reconnaît le nombre, valide, et REDEMANDE si la réponse est fausse.
+   Nécessite micro + contexte sécurisé (https/localhost) + Internet.
+   Contrat : new Speak(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+  const MAX = 10;          // ×1 à ×10
+  const MAX_TRIES = 3;     // après 3 essais ratés, on révèle et on avance
+
+  class Speak {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.onFinish = opts.onFinish || function () {};
+      this.i = 1;
+      this.correct = 0;
+      this.attempts = 0;
+      this.rec = null;
+      this.busy = false;
+    }
+
+    code() { return (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR'; }
+
+    start() {
+      this.i = 1; this.correct = 0; this.attempts = 0;
+      if (!MK.audio.canRecognize()) { this.renderUnsupported(); return; }
+      this.renderQuestion();
+    }
+
+    renderUnsupported() {
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<p style="font-size:2.4rem">🎤❌</p>' +
+          '<p>' + t('speak_mic_error') + '</p>' +
+          '<p class="screen-sub">' + t('speak_need_https') + '</p>' +
+        '</div>';
+    }
+
+    renderQuestion() {
+      if (this.i > MAX) { this.finish(); return; }
+      this.attempts = 0;
+      const a = this.table, b = this.i, answer = a * b;
+      this.answer = answer;
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span>' + t('table_of') + ' ' + a + '</span>' +
+            '<span class="score">' + this.correct + ' / ' + MAX + '</span>' +
+          '</div>' +
+          '<p class="center" style="color:var(--color-text-dim)">' + t('speak_tap') + '</p>' +
+          '<div class="question-big">' + a + ' × ' + b + ' = ?</div>' +
+          '<div class="center"><button class="mic-btn" id="sp-mic" aria-label="' + t('speak_tap') + '">🎤</button></div>' +
+          '<div class="feedback" id="sp-fb" role="status"></div>' +
+          '<div class="center" id="sp-heard" style="color:var(--color-text-dim);min-height:1.4em"></div>' +
+          '<div class="row mt" id="sp-actions"></div>' +
+          '<div class="game-hud"><span class="score">' + this.i + ' / ' + MAX + '</span></div>' +
+        '</div>';
+      const mic = this.host.querySelector('#sp-mic');
+      mic.addEventListener('click', () => this.listen());
+      // énonce la question (sans la réponse)
+      MK.audio.speakOperation(a, b);
+    }
+
+    listen() {
+      if (this.busy) return;
+      this.busy = true;
+      const mic = this.host.querySelector('#sp-mic');
+      const fb = this.host.querySelector('#sp-fb');
+      if (mic) mic.classList.add('listening');
+      if (fb) { fb.textContent = t('speak_listening'); fb.className = 'feedback'; }
+      MK.audio.resume();
+      const self = this;
+      this.rec = MK.audio.listen(this.code(), {
+        onResult: function (alts) { self.handleResult(alts); },
+        onError: function (err) { self.handleError(err); },
+        onEnd: function () { if (mic) mic.classList.remove('listening'); self.busy = false; },
+      });
+      if (!this.rec) { this.busy = false; if (mic) mic.classList.remove('listening'); }
+    }
+
+    handleResult(alts) {
+      const heard = this.host.querySelector('#sp-heard');
+      const fb = this.host.querySelector('#sp-fb');
+      const said = (alts && alts[0]) ? alts[0] : '';
+      if (heard) heard.textContent = said ? '« ' + said + ' »' : '';
+
+      const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
+      if (ok) {
+        this.correct++;
+        if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
+        MK.audio.playCorrect();
+        MK.progress.addXP(10);
+        MK.audio.speakOperation(this.table, this.i, this.answer); // confirme à voix haute
+        this.i++;
+        setTimeout(() => this.renderQuestion(), 1600);
+      } else {
+        this.attempts++;
+        MK.audio.playWrong();
+        MK.visual.shake(this.host.querySelector('.game-stage'));
+        if (this.attempts >= MAX_TRIES) {
+          // on révèle la bonne réponse puis on passe
+          if (fb) { fb.textContent = t('speak_show_answer') + ' ' + this.answer; fb.className = 'feedback ko'; }
+          MK.audio.speakOperation(this.table, this.i, this.answer);
+          this.i++;
+          setTimeout(() => this.renderQuestion(), 2200);
+        } else {
+          // on REDEMANDE (même question)
+          if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
+          setTimeout(() => { MK.audio.speak(t('speak_try_again'), this.code()); }, 300);
+        }
+      }
+    }
+
+    handleError(err) {
+      const fb = this.host.querySelector('#sp-fb');
+      const mic = this.host.querySelector('#sp-mic');
+      if (mic) mic.classList.remove('listening');
+      this.busy = false;
+      if (err === 'no-speech' || err === 'aborted') {
+        if (fb) { fb.textContent = t('speak_no_speech'); fb.className = 'feedback ko'; }
+        return; // l'enfant peut retaper le micro
+      }
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        if (fb) { fb.textContent = t('speak_mic_denied'); fb.className = 'feedback ko'; }
+      } else {
+        if (fb) { fb.textContent = t('speak_mic_error'); fb.className = 'feedback ko'; }
+      }
+      // bouton « passer » pour ne pas rester bloqué
+      const actions = this.host.querySelector('#sp-actions');
+      if (actions && !actions.querySelector('#sp-skip')) {
+        actions.innerHTML = '<button class="btn btn--ghost" id="sp-skip">' + t('btn_next') + ' →</button>';
+        actions.querySelector('#sp-skip').addEventListener('click', () => { this.i++; this.renderQuestion(); });
+      }
+    }
+
+    finish() {
+      const percent = MK.engine.pct(this.correct, MAX);
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">' + t('level_done') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.8rem">🎤 ' + this.correct + ' / ' + MAX + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="sp-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#sp-again').addEventListener('click', () => this.start());
+      if (percent >= 80) MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.correct, total: MAX, percent: percent, speedBonus: false });
+    }
+
+    stop() {
+      if (this.rec) { try { this.rec.abort ? this.rec.abort() : this.rec.stop(); } catch (e) {} this.rec = null; }
+      this.busy = false;
+    }
+  }
+
+  MK.games.Speak = Speak;
+})();
+
+/* ============================================================
+   MultipliKids — app.js
+   Init, routing SPA par hash, rendu des écrans, glue.
+   Charge en DERNIER (dépend de i18n, audio, engine, progress, visual, games).
+   ============================================================ */
+(function () {
+  'use strict';
+  const MK = window.MK;
+  const t = function (k) { return MK.i18n.t(k); };
+
+  const THEME_KEY = 'multiplikids_theme';
+  let app, gameInstance = null, currentTheme = 'space';
+
+  // ---------- Helpers ----------
+  function el(id) { return document.getElementById(id); }
+
+  function setTheme(theme) {
+    currentTheme = theme;
+    document.body.setAttribute('data-theme', theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    MK.visual.buildDecor(theme);
+  }
+
+  // Parse "#play?game=quiz&table=7&level=2" → { route:'play', params:{...} }
+  function parseHash() {
+    const raw = location.hash.replace(/^#/, '') || 'home';
+    const [route, query] = raw.split('?');
+    const params = {};
+    if (query) query.split('&').forEach(function (kv) {
+      const [k, v] = kv.split('=');
+      params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+    });
+    return { route: route || 'home', params: params };
+  }
+
+  function navigate(hash) { location.hash = hash; }
+
+  // Modale de confirmation : message dans la langue active, boutons ✔/✖ neutres.
+  // (évite les libellés OK/Annuler du navigateur, illisibles pour un enfant hellénophone)
+  function showConfirm(msg) {
+    return new Promise(function (resolve) {
+      const ov = document.createElement('div');
+      ov.className = 'modal-overlay';
+      ov.innerHTML =
+        '<div class="modal">' +
+          '<p>' + msg + '</p>' +
+          '<div class="row">' +
+            '<button class="btn btn--primary" data-yes aria-label="Oui">✔️</button>' +
+            '<button class="btn btn--ghost" data-no aria-label="Non">✖️</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(ov);
+      const done = function (v) { ov.remove(); resolve(v); };
+      ov.querySelector('[data-yes]').addEventListener('click', function () { done(true); });
+      ov.querySelector('[data-no]').addEventListener('click', function () { done(false); });
+      ov.addEventListener('click', function (e) { if (e.target === ov) done(false); });
+    });
+  }
+
+  // Partage robuste : Web Share (mobile) → presse-papier moderne → execCommand → modale.
+  // Garantit TOUJOURS un retour visible, même en file:// (contexte non sécurisé).
+  function shareSite() {
+    const url = location.href.split('#')[0];
+    if (navigator.share) {
+      navigator.share({ title: 'MultipliKids', text: t('home_title'), url: url })
+        .then(function () {}).catch(function () { fallbackCopy(url); });
+      return;
+    }
+    fallbackCopy(url);
+  }
+
+  function fallbackCopy(url) {
+    const ok = function () { MK.visual.toast(t('share_done')); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(ok).catch(function () { legacyCopy(url, ok); });
+    } else {
+      legacyCopy(url, ok);
+    }
+  }
+
+  // Copie via textarea + execCommand (fonctionne même en file://) ; sinon modale.
+  function legacyCopy(url, ok) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+      const done = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (done) { ok(); return; }
+    } catch (e) { /* ignore */ }
+    showLinkModal(url);
+  }
+
+  // Modale de secours : affiche le lien dans un champ sélectionnable + bouton copier.
+  function showLinkModal(url) {
+    const ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    ov.innerHTML =
+      '<div class="modal">' +
+        '<p>' + t('share') + '</p>' +
+        '<input id="share-link" readonly value="' + url.replace(/"/g, '&quot;') + '" ' +
+          'style="width:100%;min-height:48px;border-radius:10px;padding:10px 12px;border:none;' +
+          'background:var(--color-surface-2);color:var(--color-text);font-size:1rem;text-align:center">' +
+        '<div class="row mt">' +
+          '<button class="btn btn--primary" data-copy>📋</button>' +
+          '<button class="btn btn--ghost" data-close>✖️</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    const input = ov.querySelector('#share-link');
+    input.addEventListener('focus', function () { input.select(); });
+    ov.querySelector('[data-copy]').addEventListener('click', function () {
+      input.focus(); input.select();
+      try { document.execCommand('copy'); MK.visual.toast(t('share_done')); } catch (e) {}
+    });
+    const close = function () { ov.remove(); };
+    ov.querySelector('[data-close]').addEventListener('click', close);
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+  }
+
+  // ---------- Topbar ----------
+  function topbar(opts) {
+    opts = opts || {};
+    const lang = MK.i18n.getLang();
+    const back = opts.back
+      ? '<button class="btn btn--icon" id="tb-back" aria-label="' + t('btn_back') + '">←</button>'
+      : '<button class="btn btn--icon" id="tb-home" aria-label="' + t('btn_home') + '">🏠</button>';
+    // roue ⚙️ permanente (sauf sur l'écran Réglages lui-même)
+    const gear = opts.noSettings ? '' :
+      '<button class="btn btn--icon" id="tb-settings" aria-label="' + t('settings') + '">⚙️</button>';
+    return '<div class="topbar">' +
+      back +
+      '<h1 class="topbar__title">' + (opts.title || t('app_name')) + '</h1>' +
+      '<button class="btn btn--lang ' + (lang === 'fr' ? 'active' : '') + '" data-lang="fr" aria-label="Français">🇫🇷</button>' +
+      '<button class="btn btn--lang ' + (lang === 'el' ? 'active' : '') + '" data-lang="el" aria-label="Ελληνικά">🇬🇷</button>' +
+      gear +
+      '</div>';
+  }
+
+  function wireTopbar() {
+    const b = el('tb-back'), h = el('tb-home');
+    if (b) b.addEventListener('click', function () {
+      const goBack = function () { history.length > 1 ? history.back() : navigate('home'); };
+      if (gameInstance) { showConfirm(t('quit_confirm')).then(function (ok) { if (ok) goBack(); }); }
+      else goBack();
+    });
+    if (h) h.addEventListener('click', function () { navigate('home'); });
+    const s = el('tb-settings');
+    if (s) s.addEventListener('click', function () {
+      const go = function () { navigate('settings'); };
+      if (gameInstance) { showConfirm(t('quit_confirm')).then(function (ok) { if (ok) go(); }); }
+      else go();
+    });
+    app.querySelectorAll('[data-lang]').forEach(function (btn) {
+      btn.addEventListener('click', function () { MK.audio.resume(); MK.i18n.setLang(btn.dataset.lang); });
+    });
+  }
+
+  // ---------- Étoiles SVG ----------
+  function starBadge(filled) {
+    const fill = filled ? 'var(--color-accent)' : 'none';
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="' + fill + '" stroke="var(--color-accent)" stroke-width="1.5" stroke-linejoin="round" d="M12 2l3 6.5 7 .7-5.2 4.7 1.5 6.9L12 17.8 5.2 20.8l1.5-6.9L1.5 9.2l7-.7z"/></svg>';
+  }
+
+  // ============================================================
+  //  ÉCRANS
+  // ============================================================
+
+  function screenHome() {
+    const p = MK.progress.get();
+    const tilesHtml = MK.engine.ALL_TABLES.map(function (n) {
+      const unlocked = MK.progress.isTableUnlocked(n);
+      const stars = MK.progress.starsForTable(n);
+      const starStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+      return '<button class="table-tile ' + (unlocked ? '' : 'locked') + '" data-table="' + n + '" ' + (unlocked ? '' : 'disabled') +
+        ' aria-label="' + t('table_of') + ' ' + n + '">' +
+        (unlocked ? '' : '<span class="lock">🔒</span>') +
+        '×' + n + '<span class="stars">' + starStr + '</span></button>';
+    }).join('');
+
+    app.innerHTML = topbar() +
+      '<div class="screen-enter">' +
+      '<h2 class="screen-title">' + t('home_title') + '</h2>' +
+      '<p class="screen-sub">' + t('home_sub') + '</p>' +
+      '<div class="row" style="margin-bottom:8px">' +
+        '<button class="btn btn--secondary" id="go-progress">' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
+        '<button class="btn btn--ghost" id="go-settings">⚙️ ' + t('btn_settings') + '</button>' +
+      '</div>' +
+      '<h3 class="mt">' + t('choose_table') + '</h3>' +
+      '<div class="table-grid">' + tilesHtml + '</div>' +
+      '</div>';
+
+    wireTopbar();
+    el('go-progress').addEventListener('click', function () { navigate('progress'); });
+    el('go-settings').addEventListener('click', function () { navigate('settings'); });
+    app.querySelectorAll('.table-tile:not(.locked)').forEach(function (tile) {
+      tile.addEventListener('click', function () {
+        MK.audio.resume();
+        navigate('learn?table=' + tile.dataset.table);
+      });
+    });
+  }
+
+  function screenLearn(params) {
+    const table = parseInt(params.table, 10) || 2;
+    const level = MK.engine.levelOfTable(table);
+    const playerLevel = MK.progress.get().level;
+    // Mode libre → tous les jeux ; sinon jeux du niveau de la table débloqués par le joueur
+    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak'];
+    const games = MK.progress.getFreeMode()
+      ? ALL_GAMES
+      : MK.engine.gamesForLevel(level).filter(function (g) {
+          return MK.engine.gamesForLevel(playerLevel).indexOf(g) !== -1;
+        });
+
+    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak' };
+    const list = games.map(function (g) {
+      return '<button class="btn btn--primary" data-game="' + g + '">' + t(labels[g]) + '</button>';
+    }).join('');
+
+    app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) +
+      '<div class="screen-enter">' +
+      '<h2 class="screen-title">' + t('choose_game') + '</h2>' +
+      '<p class="screen-sub">' + t('level') + ' ' + level + '</p>' +
+      '<div class="row mt"><button class="btn btn--accent" id="learn-listen">🔊 ' + t('btn_learn') + ' ×' + table + '</button></div>' +
+      '<div class="game-list">' + list + '</div>' +
+      '</div>';
+
+    wireTopbar();
+    el('learn-listen').addEventListener('click', function () { MK.audio.resume(); navigate('study?table=' + table); });
+    app.querySelectorAll('[data-game]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        MK.audio.resume();
+        navigate('play?game=' + b.dataset.game + '&table=' + table + '&level=' + level);
+      });
+    });
+  }
+
+  // Écran APPRENDRE : visuel + audio synchronisés. La table est affichée et chaque
+  // ligne est SURLIGNÉE au moment où elle est prononcée.
+  function screenStudy(params) {
+    const table = parseInt(params.table, 10) || 2;
+    const lang = MK.i18n.getLang();
+    const code = (lang === 'fr') ? 'fr-FR' : 'el-GR';
+    const times = MK.i18n.t('times');
+    const eq = MK.i18n.t('equals');
+
+    const MAX = 10; // les leçons vont jusqu'à ×10
+    let rows = '';
+    for (let i = 1; i <= MAX; i++) {
+      rows += '<button class="study-row" data-i="' + i + '" aria-label="' + table + ' × ' + i + ' = ' + (table * i) + '">' +
+        '<span class="op">' + table + ' × ' + i + '</span>' +
+        '<span class="eq">=</span>' +
+        '<span class="res">' + (table * i) + '</span></button>';
+    }
+
+    app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) +
+      '<div class="screen-enter">' +
+      '<p class="screen-sub center">' + t('study_hint') + '</p>' +
+      '<div class="study-list" id="study-list">' + rows + '</div>' +
+      '<div class="row mt"><button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button></div>' +
+      '</div>';
+    wireTopbar();
+
+    // Phrases à prononcer (intro + lignes ×1..×10) — index aligné avec data-i (ligne k = i=k)
+    const lines = [t('table_of') + ' ' + table];
+    for (let i = 1; i <= MAX; i++) lines.push(table + ', ' + times + ', ' + i + ', ' + eq + ', ' + (table * i));
+
+    const highlight = function (i) {
+      app.querySelectorAll('.study-row.active').forEach(function (e) { e.classList.remove('active'); });
+      if (i >= 1) {
+        const row = app.querySelector('.study-row[data-i="' + i + '"]');
+        if (row) { row.classList.add('active'); try { row.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+      }
+    };
+
+    const playAll = function () {
+      MK.audio.resume();
+      MK.audio.narrate(lines, code, 450, { onLine: highlight, onDone: function () { highlight(0); } });
+    };
+
+    el('study-play').addEventListener('click', playAll);
+    // clic sur une ligne : prononce SEULEMENT cette opération + la surligne
+    app.querySelectorAll('.study-row').forEach(function (r) {
+      r.addEventListener('click', function () {
+        MK.audio.resume(); MK.audio.stopSpeech();
+        const i = parseInt(r.dataset.i, 10);
+        highlight(i);
+        MK.audio.speakOperation(table, i, table * i);
+      });
+    });
+
+    playAll(); // démarrage automatique (voix + surlignage)
+  }
+
+  function screenPlay(params) {
+    const table = parseInt(params.table, 10) || 2;
+    const level = parseInt(params.level, 10) || MK.engine.levelOfTable(table);
+    const gameKey = params.game || 'flashcard';
+    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak' };
+    const Cls = MK.games[map[gameKey]];
+
+    app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) + '<div id="game-host"></div>';
+    wireTopbar();
+
+    if (!Cls) { el('game-host').innerHTML = '<div class="card">⚠️ ' + gameKey + '</div>'; return; }
+
+    MK.progress.touchStreak();
+    const host = el('game-host');
+    gameInstance = new Cls(host, {
+      table: table, level: level,
+      onFinish: function (result) {
+        const badges = MK.progress.recordSession(result);
+        badges.forEach(function (b) {
+          MK.visual.toast(t('badge_unlocked') + ' ⭐');
+        });
+        gameInstance = null; // partie terminée (écran de fin affiché par le jeu)
+      },
+    });
+    gameInstance.start();
+  }
+
+  function screenProgress() {
+    const p = MK.progress.get();
+    const rows = MK.engine.ALL_TABLES.map(function (n) {
+      const pct = MK.progress.tablePercent(n);
+      const stars = MK.progress.starsForTable(n);
+      return '<div class="progress-table">' +
+        '<span class="name">×' + n + '</span>' +
+        '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+        '<span class="pct">' + ('★'.repeat(stars) || '–') + '</span>' +
+        '</div>';
+    }).join('');
+
+    const badgesHtml = MK.progress.BADGE_DEFS.map(function (def) {
+      const owned = MK.progress.hasBadge(def.id);
+      const lbl = def.table ? '×' + def.table : (def.id === 'speed_demon' ? '⚡' : def.id === 'streak_3' ? '🔥' : '🥇');
+      return '<div class="badge ' + (owned ? 'badge-pop' : 'locked') + '">' + starBadge(owned) +
+        '<div class="badge-lbl">' + lbl + '</div></div>';
+    }).join('');
+
+    app.innerHTML = topbar({ back: true, title: t('my_progress') }) +
+      '<div class="screen-enter">' +
+      '<div class="stat-row">' +
+        '<div class="stat"><div class="num">' + p.xp + '</div><div class="lbl">' + t('total_xp') + '</div></div>' +
+        '<div class="stat"><div class="num">' + MK.progress.masteredCount() + '</div><div class="lbl">' + t('tables_mastered') + '</div></div>' +
+        '<div class="stat"><div class="num">🔥 ' + p.streak + '</div><div class="lbl">' + t('day_streak') + '</div></div>' +
+      '</div>' +
+      '<h3>' + t('choose_table') + '</h3>' + rows +
+      '<h3 class="mt-lg">' + t('badges') + '</h3>' +
+      '<div class="badges">' + badgesHtml + '</div>' +
+      '</div>';
+    wireTopbar();
+  }
+
+  function screenSettings() {
+    const lang = MK.i18n.getLang();
+    const speechPrefix = (lang === 'fr') ? 'fr' : 'el';
+    const themeChip = function (key, label) {
+      return '<button class="chip ' + (currentTheme === key ? 'active' : '') + '" data-theme="' + key + '">' + t(label) + '</button>';
+    };
+
+    // --- Voix disponibles pour la langue active ---
+    const vlist = MK.audio.listVoices(speechPrefix);
+    const pref = MK.audio.getPreferredVoice();
+    let voiceOptions = '<option value="">' + t('voice_default') + '</option>' +
+      vlist.map(function (v) {
+        const sel = (v.uri === pref) ? ' selected' : '';
+        return '<option value="' + v.uri.replace(/"/g, '&quot;') + '"' + sel + '>' + v.name + '</option>';
+      }).join('');
+    const noGreekWarn = (speechPrefix === 'el' && vlist.length === 0)
+      ? '<p class="screen-sub" style="color:var(--color-error)">' + t('no_greek_voice') + '</p>' : '';
+
+    // --- Vitesse ---
+    const rate = MK.audio.getRate();
+    const speedChip = function (mult, label) {
+      const active = Math.abs(rate - mult) < 0.01 ? ' active' : '';
+      return '<button class="chip' + active + '" data-rate="' + mult + '">' + t(label) + '</button>';
+    };
+
+    const free = MK.progress.getFreeMode();
+
+    app.innerHTML = topbar({ back: true, noSettings: true, title: t('settings') }) +
+      '<div class="screen-enter card">' +
+      '<h3>' + t('language') + '</h3>' +
+      '<div class="choice-row">' +
+        '<button class="chip ' + (lang === 'fr' ? 'active' : '') + '" data-set-lang="fr">🇫🇷 Français</button>' +
+        '<button class="chip ' + (lang === 'el' ? 'active' : '') + '" data-set-lang="el">🇬🇷 Ελληνικά</button>' +
+      '</div>' +
+
+      '<h3>' + t('voice') + '</h3>' + noGreekWarn +
+      '<div class="choice-row" style="align-items:center">' +
+        '<select id="set-voice" style="flex:1;min-height:48px;border-radius:10px;padding:8px 12px;background:var(--color-surface-2);color:var(--color-text);font-weight:700;border:none">' + voiceOptions + '</select>' +
+        '<button class="btn btn--secondary" id="set-test">' + t('test_voice') + '</button>' +
+      '</div>' +
+      '<h3>' + t('speed') + '</h3>' +
+      '<div class="choice-row">' + speedChip(0.75, 'speed_slow') + speedChip(1, 'speed_normal') + speedChip(1.25, 'speed_fast') + '</div>' +
+
+      '<h3>' + t('free_mode') + '</h3>' +
+      '<div class="choice-row">' +
+        '<button class="chip ' + (free ? 'active' : '') + '" id="set-free">' + (free ? '✅' : '⬜') + ' ' + t('free_mode') + '</button>' +
+      '</div>' +
+      '<p class="screen-sub">' + t('free_mode_hint') + '</p>' +
+
+      '<h3>' + t('theme') + '</h3>' +
+      '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + '</div>' +
+      '<div class="mt-lg"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
+      '<div class="mt"><button class="btn btn--ghost" id="set-reset" style="color:var(--color-error);border-color:var(--color-error)">🗑️ ' + t('reset') + '</button></div>' +
+      '</div>';
+
+    wireTopbar();
+    app.querySelectorAll('[data-set-lang]').forEach(function (b) {
+      b.addEventListener('click', function () { MK.i18n.setLang(b.dataset.setLang); });
+    });
+    app.querySelectorAll('[data-theme]').forEach(function (b) {
+      b.addEventListener('click', function () { setTheme(b.dataset.theme); screenSettings(); });
+    });
+    // Voix
+    el('set-voice').addEventListener('change', function () { MK.audio.setPreferredVoice(this.value || null); });
+    el('set-test').addEventListener('click', function () {
+      MK.audio.resume();
+      MK.audio.setPreferredVoice(el('set-voice').value || null);
+      MK.audio.speakOperation(3, 4, 12); // « 3 επί 4 ίσον 12 » avec la voix/vitesse choisies
+    });
+    // Vitesse
+    app.querySelectorAll('[data-rate]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        MK.audio.setRate(parseFloat(b.dataset.rate));
+        MK.audio.speakOperation(2, 3, 6); // aperçu immédiat
+        screenSettings();
+      });
+    });
+    // Mode libre
+    el('set-free').addEventListener('click', function () {
+      MK.progress.setFreeMode(!MK.progress.getFreeMode());
+      screenSettings();
+    });
+    el('set-share').addEventListener('click', shareSite);
+    el('set-reset').addEventListener('click', function () {
+      showConfirm(t('reset_confirm')).then(function (ok) { if (ok) { MK.progress.reset(); MK.visual.toast('✅'); } });
+    });
+  }
+
+  // ---------- Router ----------
+  function render() {
+    if (gameInstance && gameInstance.stop) { gameInstance.stop(); gameInstance = null; }
+    if (MK.audio.stopSpeech) MK.audio.stopSpeech(); // coupe toute narration en quittant l'écran
+    window.scrollTo(0, 0);
+    const { route, params } = parseHash();
+    switch (route) {
+      case 'home': screenHome(); break;
+      case 'learn': screenLearn(params); break;
+      case 'study': screenStudy(params); break;
+      case 'play': screenPlay(params); break;
+      case 'progress': screenProgress(); break;
+      case 'settings': screenSettings(); break;
+      default: screenHome();
+    }
+  }
+
+  // ---------- Init ----------
+  function init() {
+    app = el('app');
+    MK.progress.load();
+    // thème sauvegardé
+    let savedTheme = 'space';
+    try { savedTheme = localStorage.getItem(THEME_KEY) || 'space'; } catch (e) {}
+    setTheme(savedTheme);
+
+    // re-render au changement de langue
+    MK.i18n.onChange(function () { render(); });
+    window.addEventListener('hashchange', render);
+    // reprise audio + amorçage des voix sur 1re interaction (politique navigateurs)
+    document.addEventListener('pointerdown', function once() {
+      MK.audio.resume(); MK.audio.primeVoices(); document.removeEventListener('pointerdown', once);
+    });
+
+    render();
+
+    // PWA : enregistrement service worker (optionnel, échoue silencieusement)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+  </script>
+</body>
+</html>
