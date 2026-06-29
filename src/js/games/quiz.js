@@ -90,6 +90,7 @@
       this.clearTimer();
       const elapsed = performance.now() - this.tStart;
       const ok = value === this.q.answer;
+      MK.progress.recordFact(this.q.a, this.q.b, ok);
       const fb = this.host.querySelector('#q-fb');
 
       if (ok) {
@@ -118,6 +119,7 @@
       if (this.locked) return;
       this.locked = true;
       this.clearTimer();
+      MK.progress.recordFact(this.q.a, this.q.b, false);
       const fb = this.host.querySelector('#q-fb');
       if (fb) { fb.textContent = t('time_up'); fb.className = 'feedback ko'; }
       this.host.querySelectorAll('.answer-btn').forEach((b) => {

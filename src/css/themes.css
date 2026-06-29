@@ -47,3 +47,19 @@ body[data-theme="jungle"] .leaf {
   position: absolute; font-size: 1.4rem; opacity: .5;
   animation: sway ease-in-out infinite;
 }
+
+/* ---------- Thème BONBONS 🍭 ---------- */
+body[data-theme="candy"] {
+  --color-bg: #2a1240;
+  --color-surface: #3d1a5c;
+  --color-surface-2: #51237a;
+  --color-primary: #ff4f9a;
+  --color-secondary: #ffb3de;
+  --color-accent: #ffe66d;
+  --color-success: #06D6A0;
+}
+body[data-theme="candy"] #bg-decor { background: radial-gradient(ellipse at top, #4a1d6e 0%, #1e0d30 70%); }
+body[data-theme="candy"] .candy {
+  position: absolute; font-size: 1.5rem; opacity: .55;
+  animation: rise linear infinite;
+}

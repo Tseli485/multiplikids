@@ -112,6 +112,7 @@
       if (this.locked || tile.dead) return;
       if (tile.correct) {
         this.locked = true;
+        MK.progress.recordFact(this.q.a, this.q.b, true);
         tile.el.classList.add('correct');
         tile.el.style.background = 'var(--color-success)';
         this.correct++;
@@ -123,6 +124,7 @@
         setTimeout(() => this.nextRound(), 450);
       } else {
         tile.dead = true;
+        MK.progress.recordFact(this.q.a, this.q.b, false);
         tile.el.style.opacity = '0.2';
         this.lives--;
         MK.audio.playWrong();
@@ -135,6 +137,7 @@
     miss() {
       if (this.locked) return;
       this.locked = true;
+      if (this.q) MK.progress.recordFact(this.q.a, this.q.b, false);
       this.lives--;
       MK.audio.playWrong();
       this.updateLives();

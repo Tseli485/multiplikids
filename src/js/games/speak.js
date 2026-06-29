@@ -131,6 +131,7 @@
       this.netErr = 0;
 
       const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
+      MK.progress.recordFact(this.table, this.i, ok);
       if (ok) {
         this.speaking = true; this.closeMic(); this.setMic(false);
         this.correct++;

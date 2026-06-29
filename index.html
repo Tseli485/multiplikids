@@ -408,6 +408,45 @@ img, svg { display: block; max-width: 100%; }
 @media (min-width: 768px) { .study-row { font-size: 1.7rem; min-height: 62px; } }
 @media (min-width: 1024px) { .study-row { font-size: 1.9rem; min-height: 68px; } }
 
+/* ---------- Profils (avatars) ---------- */
+.avatar-chip { font-size: 1.5rem; padding: 8px 14px; }
+.avatar-chip.active { background: var(--color-accent); }
+.avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+.avatar-pick {
+  font-size: 1.9rem; min-height: 58px; border-radius: 14px;
+  background: var(--color-surface-2); color: #fff; box-shadow: var(--shadow-soft);
+  transition: transform .12s;
+}
+.avatar-pick:hover { transform: scale(1.1); }
+
+/* ---------- Table de Pythagore (heatmap de maîtrise) ---------- */
+.pythagore { display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; margin: 10px 0; }
+.py-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: .6rem; border-radius: 4px; background: var(--color-surface-2); color: var(--color-text-dim);
+}
+.py-head { background: transparent; color: var(--color-accent); font-family: var(--font-display); font-size: .7rem; }
+.py-m0 { opacity: .45; }                                   /* à découvrir (gris) */
+.py-m1 { background: var(--color-primary); color: #fff; }   /* en cours (orange) */
+.py-m2 { background: #ffb454; color: #3a2400; }             /* bien (ambre) */
+.py-m3 { background: var(--color-success); color: #03261c; }/* maîtrisé (vert) */
+@media (min-width: 600px) { .py-cell { font-size: .9rem; } .py-head { font-size: 1rem; } }
+
+/* ---------- Impression / PDF ---------- */
+#print-area { display: none; }
+@media print {
+  body { background: #fff !important; }
+  #app, #bg-decor, #toast, #confetti-canvas, .modal-overlay { display: none !important; }
+  #print-area { display: block !important; color: #000; font-family: Georgia, serif; }
+  .diploma { text-align: center; border: 6px double #c8a24a; border-radius: 16px; padding: 48px 24px; margin: 24px; }
+  .diploma h1 { font-size: 2.2rem; letter-spacing: 3px; margin: 10px 0; }
+  .dip-emoji { font-size: 4rem; } .dip-av { font-size: 5rem; margin: 10px 0; }
+  .dip-text { font-size: 1.5rem; } .dip-meta { font-size: 1.1rem; color: #444; }
+  .dip-sign { margin-top: 36px; font-style: italic; color: #888; }
+  .print-table h1 { text-align: center; font-size: 1.9rem; }
+  .print-table .pr-row { text-align: center; font-size: 1.7rem; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+}
+
 /* ---------- Jeu ORAL (micro) ---------- */
 .mic-btn {
   width: 110px; height: 110px; border-radius: 50%;
@@ -594,6 +633,22 @@ body[data-theme="jungle"] .leaf {
   animation: sway ease-in-out infinite;
 }
 
+/* ---------- Thème BONBONS 🍭 ---------- */
+body[data-theme="candy"] {
+  --color-bg: #2a1240;
+  --color-surface: #3d1a5c;
+  --color-surface-2: #51237a;
+  --color-primary: #ff4f9a;
+  --color-secondary: #ffb3de;
+  --color-accent: #ffe66d;
+  --color-success: #06D6A0;
+}
+body[data-theme="candy"] #bg-decor { background: radial-gradient(ellipse at top, #4a1d6e 0%, #1e0d30 70%); }
+body[data-theme="candy"] .candy {
+  position: absolute; font-size: 1.5rem; opacity: .55;
+  animation: rise linear infinite;
+}
+
   </style>
 </head>
 <body data-theme="space">
@@ -706,6 +761,19 @@ body[data-theme="jungle"] .leaf {
       speak_again_kind: 'Essaie encore',
       speak_reveal_kind: 'Pas grave ! La réponse est',
       speak_bravo_kind: 'Super ! 🌟',
+      game_review: '🎯 Révision',
+      theme_candy: '🍭 Bonbons',
+      profiles: 'Qui joue ?',
+      add_child: 'Ajouter un enfant',
+      choose_avatar: 'Choisis ton animal',
+      delete_profile: 'Supprimer ce profil',
+      pythagore: 'Ma table de Pythagore',
+      pythagore_hint: 'Vert = maîtrisé · orange = en cours · gris = à découvrir',
+      print: '🖨️ Imprimer / PDF',
+      print_table: 'Imprimer la table',
+      print_diploma: 'Mon diplôme 🏅',
+      diploma_title: 'DIPLÔME DES TABLES',
+      diploma_text: 'a appris ses tables de multiplication !',
     },
     el: {
       app_name: 'MultipliKids',
@@ -804,6 +872,19 @@ body[data-theme="jungle"] .leaf {
       speak_again_kind: 'Δοκίμασε ξανά',
       speak_reveal_kind: 'Δεν πειράζει! Η απάντηση είναι',
       speak_bravo_kind: 'Τέλεια! 🌟',
+      game_review: '🎯 Επανάληψη',
+      theme_candy: '🍭 Ζαχαρωτά',
+      profiles: 'Ποιος παίζει;',
+      add_child: 'Πρόσθεσε παιδί',
+      choose_avatar: 'Διάλεξε το ζώο σου',
+      delete_profile: 'Διαγραφή προφίλ',
+      pythagore: 'Ο πίνακάς μου του Πυθαγόρα',
+      pythagore_hint: 'Πράσινο = κατακτήθηκε · πορτοκαλί = σε εξέλιξη · γκρι = προς ανακάλυψη',
+      print: '🖨️ Εκτύπωση / PDF',
+      print_table: 'Εκτύπωση πίνακα',
+      print_diploma: 'Το δίπλωμά μου 🏅',
+      diploma_title: 'ΔΙΠΛΩΜΑ ΠΡΟΠΑΙΔΕΙΑΣ',
+      diploma_text: 'έμαθε την προπαίδεια!',
     },
   };
 
@@ -1383,16 +1464,22 @@ body[data-theme="jungle"] .leaf {
 
 /* ============================================================
    MultipliKids — progress.js
-   Persistance localStorage : XP, niveaux, badges, streak.
+   Persistance localStorage : XP, niveaux, badges, streak,
+   PROFILS par enfant (avatar) + suivi PAR CALCUL (adaptatif).
    Toujours protégé par try/catch (mode privé).
    ============================================================ */
 (function () {
   'use strict';
   window.MK = window.MK || {};
 
-  const KEY = 'multiplikids_progress';
+  const OLD_KEY = 'multiplikids_progress';     // ancienne clé unique (migration)
+  const PROFILES_KEY = 'multiplikids_profiles'; // liste d'avatars
+  const ACTIVE_KEY = 'multiplikids_active';      // avatar actif
+  const dataKey = function (av) { return 'multiplikids_data_' + av; };
 
-  // Définition des badges (id → table associée ou condition spéciale)
+  // Avatars disponibles pour les profils (aucun clavier : l'enfant choisit son animal)
+  const AVATARS = ['🐱', '🐶', '🦄', '🦁', '🐸', '🐧', '🐼', '🦊', '🐵', '🐢', '🐰', '🐯'];
+
   const BADGE_DEFS = [
     { id: 'table1_star', table: 1 }, { id: 'table2_star', table: 2 },
     { id: 'table3_star', table: 3 }, { id: 'table4_star', table: 4 },
@@ -1400,46 +1487,99 @@ body[data-theme="jungle"] .leaf {
     { id: 'table7_star', table: 7 }, { id: 'table8_star', table: 8 },
     { id: 'table9_star', table: 9 }, { id: 'table10_star', table: 10 },
     { id: 'table11_star', table: 11 }, { id: 'table12_star', table: 12 },
-    { id: 'speed_demon', special: 'speed' },     // bonus vitesse atteint
-    { id: 'streak_3', special: 'streak3' },        // 3 jours de suite
-    { id: 'first_win', special: 'first' },          // 1re session réussie
+    { id: 'speed_demon', special: 'speed' },
+    { id: 'streak_3', special: 'streak3' },
+    { id: 'first_win', special: 'first' },
   ];
 
   function defaultState() {
     return {
-      level: 1,
-      xp: 0,
-      tables: {},           // { "2": { sessions, avgScore, recentScores:[], mastered } }
-      badges: [],
-      streak: 0,
-      lastPlayDay: null,    // 'YYYY-MM-DD'
+      level: 1, xp: 0,
+      tables: {},   // { "2": { sessions, avgScore, recentScores:[], mastered } }
+      facts: {},    // { "7x8": { seen, correct, wrong } }  ← suivi par calcul
+      badges: [], streak: 0, lastPlayDay: null,
       lang: (MK.i18n ? MK.i18n.getLang() : 'el'),
-      freeMode: true,       // DÉFAUT : toutes les tables/jeux accessibles (mode libre)
+      freeMode: true,
     };
   }
 
   let state = defaultState();
+  let profiles = [];
+  let active = null;
+
+  function readJSON(key, fallback) {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; } catch (e) { return fallback; }
+  }
+  function writeJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+  // ---------- Profils ----------
+  function ensureProfiles() {
+    profiles = readJSON(PROFILES_KEY, null);
+    if (!Array.isArray(profiles) || !profiles.length) {
+      profiles = ['🐱'];
+      // migration : ancienne progression unique → profil par défaut
+      const old = readJSON(OLD_KEY, null);
+      if (old) writeJSON(dataKey('🐱'), old);
+      writeJSON(PROFILES_KEY, profiles);
+    }
+    active = null;
+    try { active = localStorage.getItem(ACTIVE_KEY); } catch (e) {}
+    if (!active || profiles.indexOf(active) === -1) { active = profiles[0]; writeJSON(ACTIVE_KEY, active); try { localStorage.setItem(ACTIVE_KEY, active); } catch (e) {} }
+  }
+
+  function loadActive() {
+    const parsed = readJSON(dataKey(active), null);
+    state = Object.assign(defaultState(), parsed || {});
+    state.tables = state.tables || {};
+    state.facts = state.facts || {};
+    state.badges = state.badges || [];
+  }
 
   function load() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        state = Object.assign(defaultState(), parsed);
-        state.tables = state.tables || {};
-        state.badges = state.badges || [];
-      }
-    } catch (e) { state = defaultState(); }
+    ensureProfiles();
+    loadActive();
     return state;
   }
 
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
-  }
+  function save() { writeJSON(dataKey(active), state); }
 
   function get() { return state; }
 
-  // Date locale 'YYYY-MM-DD'
+  function listProfiles() { return profiles.slice(); }
+  function getActive() { return active; }
+  function availableAvatars() { return AVATARS.filter(function (a) { return profiles.indexOf(a) === -1; }); }
+
+  function setActive(av) {
+    if (profiles.indexOf(av) === -1) return;
+    save();                       // sauve le profil courant avant de changer
+    active = av;
+    try { localStorage.setItem(ACTIVE_KEY, av); } catch (e) {}
+    loadActive();
+  }
+
+  function addProfile(av) {
+    if (!av || profiles.indexOf(av) !== -1) return false;
+    profiles.push(av);
+    writeJSON(PROFILES_KEY, profiles);
+    save();
+    active = av;
+    try { localStorage.setItem(ACTIVE_KEY, av); } catch (e) {}
+    state = defaultState();       // nouveau profil = progression neuve
+    save();
+    return true;
+  }
+
+  function deleteProfile(av) {
+    const idx = profiles.indexOf(av);
+    if (idx === -1 || profiles.length <= 1) return false; // garde toujours au moins 1 profil
+    profiles.splice(idx, 1);
+    writeJSON(PROFILES_KEY, profiles);
+    try { localStorage.removeItem(dataKey(av)); } catch (e) {}
+    if (active === av) { active = profiles[0]; try { localStorage.setItem(ACTIVE_KEY, active); } catch (e) {} loadActive(); }
+    return true;
+  }
+
+  // ---------- Divers ----------
   function todayStr() {
     const d = new Date();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1447,76 +1587,87 @@ body[data-theme="jungle"] .leaf {
     return d.getFullYear() + '-' + m + '-' + day;
   }
 
-  function addXP(amount) {
-    state.xp += Math.max(0, amount | 0);
-    save();
-    return state.xp;
-  }
+  function addXP(amount) { state.xp += Math.max(0, amount | 0); save(); return state.xp; }
 
-  // Met à jour le streak journalier en début de session
   function touchStreak() {
     const today = todayStr();
     if (state.lastPlayDay === today) return state.streak;
-    // jour précédent ?
     const y = new Date(); y.setDate(y.getDate() - 1);
     const ym = String(y.getMonth() + 1).padStart(2, '0');
     const yd = String(y.getDate()).padStart(2, '0');
     const yesterday = y.getFullYear() + '-' + ym + '-' + yd;
-    if (state.lastPlayDay === yesterday) state.streak += 1;
-    else state.streak = 1;
+    if (state.lastPlayDay === yesterday) state.streak += 1; else state.streak = 1;
     state.lastPlayDay = today;
     if (state.streak >= 3) unlockBadge('streak_3');
     save();
     return state.streak;
   }
 
-  // Enregistre le résultat d'une session sur une table
-  // result = { table, percent, speedBonus:bool }
-  // Retourne la liste des badges nouvellement débloqués.
+  // ---------- Suivi PAR CALCUL (adaptatif) ----------
+  function factKey(a, b) { return a + 'x' + b; }
+  function recordFact(a, b, ok) {
+    if (!a || !b) return;
+    const k = factKey(a, b);
+    const f = state.facts[k] || { seen: 0, correct: 0, wrong: 0 };
+    f.seen += 1;
+    if (ok) f.correct += 1; else f.wrong += 1;
+    state.facts[k] = f;
+    save();
+  }
+  function factStats(a, b) { return state.facts[factKey(a, b)] || null; }
+  // 0 = jamais vu · 1 = en cours · 2 = bien · 3 = maîtrisé
+  function factMastery(a, b) {
+    const f = state.facts[factKey(a, b)];
+    if (!f || f.seen === 0) return 0;
+    if (f.correct >= 3 && f.correct > f.wrong * 2) return 3;
+    if (f.correct > f.wrong) return 2;
+    return 1;
+  }
+  // Les calculs les plus faibles (à réviser en priorité). table=null → mix toutes tables.
+  function weakestFacts(table, n) {
+    const cands = [];
+    const as = table ? [table] : [2, 3, 4, 5, 6, 7, 8, 9, 10];
+    for (let ai = 0; ai < as.length; ai++) {
+      for (let b = 1; b <= 10; b++) {
+        const a = as[ai];
+        const f = state.facts[factKey(a, b)] || { seen: 0, correct: 0, wrong: 0 };
+        // score de faiblesse : jamais vu = priorité moyenne, erreurs = priorité haute
+        const weakness = (f.seen === 0 ? 1.5 : 0) + f.wrong * 2 - f.correct + (f.seen === 0 ? 0 : 0);
+        cands.push({ a: a, b: b, answer: a * b, weakness: weakness, seen: f.seen });
+      }
+    }
+    cands.sort(function (x, y) { return y.weakness - x.weakness; });
+    return cands.slice(0, n || 10);
+  }
+
   function recordSession(result) {
     const tk = String(result.table);
     const T = state.tables[tk] || { sessions: 0, avgScore: 0, recentScores: [], mastered: false };
     T.sessions += 1;
     T.recentScores = (T.recentScores || []).concat(result.percent).slice(-3);
-    // moyenne globale lissée
     T.avgScore = Math.round(((T.avgScore * (T.sessions - 1)) + result.percent) / T.sessions);
-
     const newBadges = [];
-
-    // Maîtrise : 80% sur les 3 dernières sessions consécutives
     if (!T.mastered && T.recentScores.length >= 3 && T.recentScores.every(function (s) { return s >= 80; })) {
       T.mastered = true;
       const b = 'table' + result.table + '_star';
       if (unlockBadge(b)) newBadges.push(b);
     }
     state.tables[tk] = T;
-
-    // Première victoire
     if (result.percent >= 50 && unlockBadge('first_win')) newBadges.push('first_win');
-    // Démon de vitesse
     if (result.speedBonus && unlockBadge('speed_demon')) newBadges.push('speed_demon');
     if (state.streak >= 3 && unlockBadge('streak_3')) newBadges.push('streak_3');
-
     recomputeLevel();
     save();
     return newBadges;
   }
 
-  function unlockBadge(id) {
-    if (state.badges.indexOf(id) === -1) { state.badges.push(id); return true; }
-    return false;
-  }
-
+  function unlockBadge(id) { if (state.badges.indexOf(id) === -1) { state.badges.push(id); return true; } return false; }
   function hasBadge(id) { return state.badges.indexOf(id) !== -1; }
 
-  // Déblocage de niveau : toutes les tables du niveau courant maîtrisées → niveau+1
   function recomputeLevel() {
     for (let lvl = 1; lvl <= 4; lvl++) {
       const tables = MK.engine.LEVEL_TABLES[lvl];
-      const allMastered = tables.every(function (t) {
-        const T = state.tables[String(t)];
-        return T && T.mastered;
-      });
+      const allMastered = tables.every(function (t) { const T = state.tables[String(t)]; return T && T.mastered; });
       if (allMastered && state.level < lvl + 1 && lvl < 4) state.level = lvl + 1;
       if (!allMastered) break;
     }
@@ -1524,16 +1675,10 @@ body[data-theme="jungle"] .leaf {
   }
 
   function isLevelUnlocked(level) { return state.freeMode || level <= state.level; }
-  function isTableUnlocked(table) {
-    if (state.freeMode) return true;
-    const lvl = MK.engine.levelOfTable(table);
-    return isLevelUnlocked(lvl);
-  }
-
+  function isTableUnlocked(table) { if (state.freeMode) return true; return isLevelUnlocked(MK.engine.levelOfTable(table)); }
   function getFreeMode() { return !!state.freeMode; }
   function setFreeMode(v) { state.freeMode = !!v; save(); }
 
-  // Étoiles 0..3 pour une table (selon avgScore)
   function starsForTable(table) {
     const T = state.tables[String(table)];
     if (!T) return 0;
@@ -1542,26 +1687,18 @@ body[data-theme="jungle"] .leaf {
     if (T.avgScore >= 40 || T.sessions > 0) return 1;
     return 0;
   }
+  function tablePercent(table) { const T = state.tables[String(table)]; return T ? T.avgScore : 0; }
+  function masteredCount() { return Object.keys(state.tables).filter(function (k) { return state.tables[k].mastered; }).length; }
 
-  function tablePercent(table) {
-    const T = state.tables[String(table)];
-    return T ? T.avgScore : 0;
-  }
-
-  function masteredCount() {
-    return Object.keys(state.tables).filter(function (k) { return state.tables[k].mastered; }).length;
-  }
-
-  function reset() {
-    state = defaultState();
-    save();
-  }
+  function reset() { state = defaultState(); save(); }
 
   window.MK.progress = {
-    BADGE_DEFS: BADGE_DEFS,
+    BADGE_DEFS: BADGE_DEFS, AVATARS: AVATARS,
     load: load, save: save, get: get,
-    addXP: addXP,
-    touchStreak: touchStreak,
+    listProfiles: listProfiles, getActive: getActive, setActive: setActive,
+    addProfile: addProfile, deleteProfile: deleteProfile, availableAvatars: availableAvatars,
+    addXP: addXP, touchStreak: touchStreak,
+    recordFact: recordFact, factStats: factStats, factMastery: factMastery, weakestFacts: weakestFacts,
     recordSession: recordSession,
     unlockBadge: unlockBadge, hasBadge: hasBadge,
     isLevelUnlocked: isLevelUnlocked, isTableUnlocked: isTableUnlocked,
@@ -1700,6 +1837,17 @@ body[data-theme="jungle"] .leaf {
         l.style.animationDelay = (Math.random() * 4) + 's';
         host.appendChild(l);
       }
+    } else if (theme === 'candy') {
+      const sweets = ['🍬', '🍭', '🧁', '🍩', '🍫'];
+      for (let i = 0; i < 16; i++) {
+        const c = document.createElement('div');
+        c.className = 'candy';
+        c.textContent = sweets[i % sweets.length];
+        c.style.left = (Math.random() * 100) + '%';
+        c.style.animationDuration = (Math.random() * 9 + 7) + 's';
+        c.style.animationDelay = (Math.random() * 7) + 's';
+        host.appendChild(c);
+      }
     } else { // space
       for (let i = 0; i < 60; i++) {
         const s = document.createElement('div');
@@ -1807,6 +1955,7 @@ body[data-theme="jungle"] .leaf {
     answer(knew) {
       const c = this.current();
       this.total++;
+      MK.progress.recordFact(c.a, c.b, knew);
       if (knew) {
         this.correct++;
         c.mastery = Math.min(3, c.mastery + 1);
@@ -1934,6 +2083,7 @@ body[data-theme="jungle"] .leaf {
       this.clearTimer();
       const elapsed = performance.now() - this.tStart;
       const ok = value === this.q.answer;
+      MK.progress.recordFact(this.q.a, this.q.b, ok);
       const fb = this.host.querySelector('#q-fb');
 
       if (ok) {
@@ -1962,6 +2112,7 @@ body[data-theme="jungle"] .leaf {
       if (this.locked) return;
       this.locked = true;
       this.clearTimer();
+      MK.progress.recordFact(this.q.a, this.q.b, false);
       const fb = this.host.querySelector('#q-fb');
       if (fb) { fb.textContent = t('time_up'); fb.className = 'feedback ko'; }
       this.host.querySelectorAll('.answer-btn').forEach((b) => {
@@ -2230,6 +2381,7 @@ body[data-theme="jungle"] .leaf {
       this.locked = true;
       const elapsed = performance.now() - this.tStart;
       const ok = value === this.q.answer;
+      MK.progress.recordFact(this.q.a, this.q.b, ok);
       const fb = this.host.querySelector('#rk-fb');
       this.answered++;
 
@@ -2389,6 +2541,7 @@ body[data-theme="jungle"] .leaf {
       if (this.locked || tile.dead) return;
       if (tile.correct) {
         this.locked = true;
+        MK.progress.recordFact(this.q.a, this.q.b, true);
         tile.el.classList.add('correct');
         tile.el.style.background = 'var(--color-success)';
         this.correct++;
@@ -2400,6 +2553,7 @@ body[data-theme="jungle"] .leaf {
         setTimeout(() => this.nextRound(), 450);
       } else {
         tile.dead = true;
+        MK.progress.recordFact(this.q.a, this.q.b, false);
         tile.el.style.opacity = '0.2';
         this.lives--;
         MK.audio.playWrong();
@@ -2412,6 +2566,7 @@ body[data-theme="jungle"] .leaf {
     miss() {
       if (this.locked) return;
       this.locked = true;
+      if (this.q) MK.progress.recordFact(this.q.a, this.q.b, false);
       this.lives--;
       MK.audio.playWrong();
       this.updateLives();
@@ -2576,6 +2731,7 @@ body[data-theme="jungle"] .leaf {
       this.netErr = 0;
 
       const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
+      MK.progress.recordFact(this.table, this.i, ok);
       if (ok) {
         this.speaking = true; this.closeMic(); this.setMic(false);
         this.correct++;
@@ -2660,6 +2816,111 @@ body[data-theme="jungle"] .leaf {
 })();
 
 /* ============================================================
+   MultipliKids — games/review.js
+   RÉVISION ADAPTATIVE 🎯 : rejoue en priorité les calculs que l'enfant
+   rate le plus (suivi par calcul). QCM SANS chrono (calme, pédagogique).
+   Contrat : new Review(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+  const TOTAL_Q = 10;
+
+  class Review {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.onFinish = opts.onFinish || function () {};
+      this.qIndex = 0; this.correct = 0; this.locked = false;
+    }
+
+    start() {
+      this.qIndex = 0; this.correct = 0;
+      // construit la file : les calculs les plus faibles d'abord
+      this.pool = MK.progress.weakestFacts(this.table, TOTAL_Q);
+      this.next();
+    }
+
+    next() {
+      if (this.qIndex >= TOTAL_Q) { this.finish(); return; }
+      this.locked = false;
+      const f = this.pool[this.qIndex % this.pool.length];
+      this.q = { a: f.a, b: f.b, answer: f.answer, options: MK.engine.makeDistractors(f.answer, f.a, f.b) };
+      this.render();
+      MK.audio.speakOperation(this.q.a, this.q.b);
+    }
+
+    render() {
+      const opts = this.q.options.map(function (o) {
+        return '<button class="answer-btn" data-v="' + o + '">' + o + '</button>';
+      }).join('');
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud">' +
+            '<span>🎯 ' + t('game_review') + '</span>' +
+            '<span class="score">' + t('score') + ' : ' + this.correct + '</span>' +
+          '</div>' +
+          '<div class="question-big">' + this.q.a + ' × ' + this.q.b + ' = ?</div>' +
+          '<div class="center" style="margin-bottom:10px"><button class="btn btn--ghost" id="rv-repeat" aria-label="' + t('btn_repeat') + '">' + t('btn_repeat') + '</button></div>' +
+          '<div class="answers" id="rv-answers">' + opts + '</div>' +
+          '<div class="feedback" id="rv-fb" role="status"></div>' +
+          '<div class="game-hud"><span class="score">' + (this.qIndex + 1) + ' / ' + TOTAL_Q + '</span></div>' +
+        '</div>';
+      const self = this;
+      this.host.querySelectorAll('.answer-btn').forEach(function (b) {
+        b.addEventListener('click', function () { self.choose(parseInt(b.dataset.v, 10), b); });
+      });
+      this.host.querySelector('#rv-repeat').addEventListener('click', function () { MK.audio.speakOperation(self.q.a, self.q.b); });
+    }
+
+    choose(value, btn) {
+      if (this.locked) return;
+      this.locked = true;
+      const ok = value === this.q.answer;
+      MK.progress.recordFact(this.q.a, this.q.b, ok);
+      const fb = this.host.querySelector('#rv-fb');
+      if (ok) {
+        btn.classList.add('correct');
+        this.correct++;
+        MK.progress.addXP(10);
+        if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
+        MK.audio.playCorrect();
+        this.qIndex++;
+        setTimeout(() => this.next(), 1100);
+      } else {
+        btn.classList.add('wrong');
+        this.host.querySelectorAll('.answer-btn').forEach((b) => { if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct'); });
+        if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
+        MK.audio.playWrong();
+        // on réénonce la bonne réponse (pédagogique), puis on avance
+        MK.audio.speakOperation(this.q.a, this.q.b, this.q.answer);
+        this.qIndex++;
+        setTimeout(() => this.next(), 1800);
+      }
+    }
+
+    finish() {
+      const percent = MK.engine.pct(this.correct, TOTAL_Q);
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">🎯 ' + t('level_done') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.6rem">' + this.correct + ' / ' + TOTAL_Q + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="rv-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#rv-again').addEventListener('click', () => this.start());
+      if (percent >= 70) MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.correct, total: TOTAL_Q, percent: percent, speedBonus: false });
+    }
+
+    stop() {}
+  }
+
+  MK.games.Review = Review;
+})();
+
+/* ============================================================
    MultipliKids — app.js
    Init, routing SPA par hash, rendu des écrans, glue.
    Charge en DERNIER (dépend de i18n, audio, engine, progress, visual, games).
@@ -2729,6 +2990,40 @@ body[data-theme="jungle"] .leaf {
       ov.querySelector('[data-no]').addEventListener('click', function () { done(false); });
       ov.addEventListener('click', function (e) { if (e.target === ov) done(false); });
     });
+  }
+
+  // Sélecteur d'avatar (ajout de profil enfant) — modale, aucun clavier
+  function showAvatarPicker(cb) {
+    const avs = MK.progress.availableAvatars();
+    const ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    ov.innerHTML = '<div class="modal"><p>' + t('choose_avatar') + '</p><div class="avatar-grid">' +
+      avs.map(function (a) { return '<button class="avatar-pick" data-av="' + a + '">' + a + '</button>'; }).join('') +
+      '</div></div>';
+    document.body.appendChild(ov);
+    const done = function (v) { ov.remove(); cb(v); };
+    ov.querySelectorAll('[data-av]').forEach(function (b) { b.addEventListener('click', function () { done(b.dataset.av); }); });
+    ov.addEventListener('click', function (e) { if (e.target === ov) done(null); });
+  }
+
+  // Impression / PDF (le navigateur propose « Enregistrer en PDF »)
+  function printView(kind, table) {
+    let host = el('print-area');
+    if (!host) { host = document.createElement('div'); host.id = 'print-area'; document.body.appendChild(host); }
+    if (kind === 'diploma') {
+      const p = MK.progress.get(); const av = MK.progress.getActive();
+      host.innerHTML = '<div class="diploma"><div class="dip-emoji">🏅</div>' +
+        '<h1>' + t('diploma_title') + '</h1>' +
+        '<div class="dip-av">' + av + '</div>' +
+        '<p class="dip-text">' + t('diploma_text') + '</p>' +
+        '<p class="dip-meta">⭐ ' + p.xp + ' XP · ' + MK.progress.masteredCount() + ' ' + t('tables_mastered') + '</p>' +
+        '<p class="dip-sign">MultipliKids</p></div>';
+    } else {
+      let rows = '';
+      for (let i = 1; i <= 10; i++) rows += '<div class="pr-row">' + table + ' × ' + i + ' = <b>' + (table * i) + '</b></div>';
+      host.innerHTML = '<div class="print-table"><h1>' + t('table_of') + ' ' + table + '</h1>' + rows + '</div>';
+    }
+    setTimeout(function () { try { window.print(); } catch (e) {} }, 120);
   }
 
   // Partage robuste : Web Share (mobile) → presse-papier moderne → execCommand → modale.
@@ -2860,7 +3155,7 @@ body[data-theme="jungle"] .leaf {
       '<h2 class="screen-title">' + t('home_title') + '</h2>' +
       '<p class="screen-sub">' + t('home_sub') + '</p>' +
       '<div class="row" style="margin-bottom:8px">' +
-        '<button class="btn btn--secondary" id="go-progress">' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
+        '<button class="btn btn--secondary" id="go-progress">' + MK.progress.getActive() + ' ' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
         '<button class="btn btn--ghost" id="go-settings">⚙️ ' + t('btn_settings') + '</button>' +
       '</div>' +
       '<h3 class="mt">' + t('choose_table') + '</h3>' +
@@ -2883,14 +3178,14 @@ body[data-theme="jungle"] .leaf {
     const level = MK.engine.levelOfTable(table);
     const playerLevel = MK.progress.get().level;
     // Mode libre → tous les jeux ; sinon jeux du niveau de la table débloqués par le joueur
-    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak'];
+    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak', 'review'];
     const games = MK.progress.getFreeMode()
       ? ALL_GAMES
       : MK.engine.gamesForLevel(level).filter(function (g) {
           return MK.engine.gamesForLevel(playerLevel).indexOf(g) !== -1;
         });
 
-    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak' };
+    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak', review: 'game_review' };
     const list = games.map(function (g) {
       return '<button class="btn btn--primary" data-game="' + g + '">' + t(labels[g]) + '</button>';
     }).join('');
@@ -2935,9 +3230,13 @@ body[data-theme="jungle"] .leaf {
       '<div class="screen-enter">' +
       '<p class="screen-sub center">' + t('study_hint') + '</p>' +
       '<div class="study-list" id="study-list">' + rows + '</div>' +
-      '<div class="row mt"><button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button></div>' +
+      '<div class="row mt">' +
+        '<button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button>' +
+        '<button class="btn btn--ghost" id="study-print">' + t('print_table') + '</button>' +
+      '</div>' +
       '</div>';
     wireTopbar();
+    el('study-print').addEventListener('click', function () { printView('table', table); });
 
     // Phrases à prononcer (intro + lignes ×1..×10) — index aligné avec data-i (ligne k = i=k)
     const lines = [t('table_of') + ' ' + table];
@@ -2974,7 +3273,7 @@ body[data-theme="jungle"] .leaf {
     const table = parseInt(params.table, 10) || 2;
     const level = parseInt(params.level, 10) || MK.engine.levelOfTable(table);
     const gameKey = params.game || 'flashcard';
-    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak' };
+    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak', review: 'Review' };
     const Cls = MK.games[map[gameKey]];
 
     app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) + '<div id="game-host"></div>';
@@ -3016,18 +3315,35 @@ body[data-theme="jungle"] .leaf {
         '<div class="badge-lbl">' + lbl + '</div></div>';
     }).join('');
 
+    // Table de Pythagore 10×10 colorée par maîtrise (apprentissage visuel)
+    let py = '<div class="pythagore"><div class="py-cell py-head">×</div>';
+    for (let b = 1; b <= 10; b++) py += '<div class="py-cell py-head">' + b + '</div>';
+    for (let a = 1; a <= 10; a++) {
+      py += '<div class="py-cell py-head">' + a + '</div>';
+      for (let b = 1; b <= 10; b++) {
+        const m = MK.progress.factMastery(a, b);
+        py += '<div class="py-cell py-m' + m + '">' + (a * b) + '</div>';
+      }
+    }
+    py += '</div>';
+
     app.innerHTML = topbar({ back: true, title: t('my_progress') }) +
       '<div class="screen-enter">' +
+      '<div class="center" style="font-size:2rem">' + MK.progress.getActive() + '</div>' +
       '<div class="stat-row">' +
         '<div class="stat"><div class="num">' + p.xp + '</div><div class="lbl">' + t('total_xp') + '</div></div>' +
         '<div class="stat"><div class="num">' + MK.progress.masteredCount() + '</div><div class="lbl">' + t('tables_mastered') + '</div></div>' +
         '<div class="stat"><div class="num">🔥 ' + p.streak + '</div><div class="lbl">' + t('day_streak') + '</div></div>' +
       '</div>' +
-      '<h3>' + t('choose_table') + '</h3>' + rows +
+      '<h3>' + t('pythagore') + '</h3>' +
+      '<p class="screen-sub">' + t('pythagore_hint') + '</p>' + py +
+      '<h3 class="mt-lg">' + t('choose_table') + '</h3>' + rows +
       '<h3 class="mt-lg">' + t('badges') + '</h3>' +
       '<div class="badges">' + badgesHtml + '</div>' +
+      '<div class="row mt-lg"><button class="btn btn--accent" id="pr-diploma">' + t('print_diploma') + '</button></div>' +
       '</div>';
     wireTopbar();
+    el('pr-diploma').addEventListener('click', function () { printView('diploma'); });
   }
 
   function screenSettings() {
@@ -3057,8 +3373,19 @@ body[data-theme="jungle"] .leaf {
 
     const free = MK.progress.getFreeMode();
 
+    // Profils (par avatar)
+    const profs = MK.progress.listProfiles();
+    const act = MK.progress.getActive();
+    const profChips = profs.map(function (av) {
+      return '<button class="chip avatar-chip ' + (av === act ? 'active' : '') + '" data-profile="' + av + '">' + av + '</button>';
+    }).join('');
+    const addChip = MK.progress.availableAvatars().length ? '<button class="chip" id="prof-add">➕</button>' : '';
+    const delChip = (profs.length > 1) ? '<button class="chip" id="prof-del" style="color:var(--color-error)">🗑️</button>' : '';
+
     app.innerHTML = topbar({ back: true, noSettings: true, title: t('settings') }) +
       '<div class="screen-enter card">' +
+      '<h3>' + t('profiles') + '</h3>' +
+      '<div class="choice-row">' + profChips + addChip + delChip + '</div>' +
       '<h3>' + t('language') + '</h3>' +
       '<div class="choice-row">' +
         '<button class="chip ' + (lang === 'fr' ? 'active' : '') + '" data-set-lang="fr">🇫🇷 Français</button>' +
@@ -3080,12 +3407,24 @@ body[data-theme="jungle"] .leaf {
       '<p class="screen-sub">' + t('free_mode_hint') + '</p>' +
 
       '<h3>' + t('theme') + '</h3>' +
-      '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + '</div>' +
+      '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + themeChip('candy', 'theme_candy') + '</div>' +
       '<div class="mt-lg"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
       '<div class="mt"><button class="btn btn--ghost" id="set-reset" style="color:var(--color-error);border-color:var(--color-error)">🗑️ ' + t('reset') + '</button></div>' +
       '</div>';
 
     wireTopbar();
+    // Profils
+    app.querySelectorAll('[data-profile]').forEach(function (b) {
+      b.addEventListener('click', function () { MK.progress.setActive(b.dataset.profile); render(); });
+    });
+    if (el('prof-add')) el('prof-add').addEventListener('click', function () {
+      showAvatarPicker(function (av) { if (av) { MK.progress.addProfile(av); render(); } });
+    });
+    if (el('prof-del')) el('prof-del').addEventListener('click', function () {
+      showConfirm(t('delete_profile') + ' ' + MK.progress.getActive() + ' ?').then(function (ok) {
+        if (ok) { MK.progress.deleteProfile(MK.progress.getActive()); render(); }
+      });
+    });
     app.querySelectorAll('[data-set-lang]').forEach(function (b) {
       b.addEventListener('click', function () { MK.i18n.setLang(b.dataset.setLang); });
     });

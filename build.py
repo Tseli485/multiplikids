@@ -18,7 +18,7 @@ CSS_FILES = ["css/main.css", "css/animations.css", "css/themes.css"]
 JS_FILES = [
     "js/i18n.js", "js/audio.js", "js/engine.js", "js/progress.js", "js/visual.js",
     "js/games/flashcard.js", "js/games/quiz.js", "js/games/memory.js",
-    "js/games/rocket.js", "js/games/rhythm.js", "js/games/speak.js", "js/app.js",
+    "js/games/rocket.js", "js/games/rhythm.js", "js/games/speak.js", "js/games/review.js", "js/app.js",
 ]
 
 

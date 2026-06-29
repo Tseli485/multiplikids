@@ -88,6 +88,7 @@
     answer(knew) {
       const c = this.current();
       this.total++;
+      MK.progress.recordFact(c.a, c.b, knew);
       if (knew) {
         this.correct++;
         c.mastery = Math.min(3, c.mastery + 1);

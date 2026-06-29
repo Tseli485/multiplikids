@@ -126,6 +126,17 @@
         l.style.animationDelay = (Math.random() * 4) + 's';
         host.appendChild(l);
       }
+    } else if (theme === 'candy') {
+      const sweets = ['🍬', '🍭', '🧁', '🍩', '🍫'];
+      for (let i = 0; i < 16; i++) {
+        const c = document.createElement('div');
+        c.className = 'candy';
+        c.textContent = sweets[i % sweets.length];
+        c.style.left = (Math.random() * 100) + '%';
+        c.style.animationDuration = (Math.random() * 9 + 7) + 's';
+        c.style.animationDelay = (Math.random() * 7) + 's';
+        host.appendChild(c);
+      }
     } else { // space
       for (let i = 0; i < 60; i++) {
         const s = document.createElement('div');

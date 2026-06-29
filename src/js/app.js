@@ -70,6 +70,40 @@
     });
   }
 
+  // Sélecteur d'avatar (ajout de profil enfant) — modale, aucun clavier
+  function showAvatarPicker(cb) {
+    const avs = MK.progress.availableAvatars();
+    const ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    ov.innerHTML = '<div class="modal"><p>' + t('choose_avatar') + '</p><div class="avatar-grid">' +
+      avs.map(function (a) { return '<button class="avatar-pick" data-av="' + a + '">' + a + '</button>'; }).join('') +
+      '</div></div>';
+    document.body.appendChild(ov);
+    const done = function (v) { ov.remove(); cb(v); };
+    ov.querySelectorAll('[data-av]').forEach(function (b) { b.addEventListener('click', function () { done(b.dataset.av); }); });
+    ov.addEventListener('click', function (e) { if (e.target === ov) done(null); });
+  }
+
+  // Impression / PDF (le navigateur propose « Enregistrer en PDF »)
+  function printView(kind, table) {
+    let host = el('print-area');
+    if (!host) { host = document.createElement('div'); host.id = 'print-area'; document.body.appendChild(host); }
+    if (kind === 'diploma') {
+      const p = MK.progress.get(); const av = MK.progress.getActive();
+      host.innerHTML = '<div class="diploma"><div class="dip-emoji">🏅</div>' +
+        '<h1>' + t('diploma_title') + '</h1>' +
+        '<div class="dip-av">' + av + '</div>' +
+        '<p class="dip-text">' + t('diploma_text') + '</p>' +
+        '<p class="dip-meta">⭐ ' + p.xp + ' XP · ' + MK.progress.masteredCount() + ' ' + t('tables_mastered') + '</p>' +
+        '<p class="dip-sign">MultipliKids</p></div>';
+    } else {
+      let rows = '';
+      for (let i = 1; i <= 10; i++) rows += '<div class="pr-row">' + table + ' × ' + i + ' = <b>' + (table * i) + '</b></div>';
+      host.innerHTML = '<div class="print-table"><h1>' + t('table_of') + ' ' + table + '</h1>' + rows + '</div>';
+    }
+    setTimeout(function () { try { window.print(); } catch (e) {} }, 120);
+  }
+
   // Partage robuste : Web Share (mobile) → presse-papier moderne → execCommand → modale.
   // Garantit TOUJOURS un retour visible, même en file:// (contexte non sécurisé).
   function shareSite() {
@@ -199,7 +233,7 @@
       '<h2 class="screen-title">' + t('home_title') + '</h2>' +
       '<p class="screen-sub">' + t('home_sub') + '</p>' +
       '<div class="row" style="margin-bottom:8px">' +
-        '<button class="btn btn--secondary" id="go-progress">' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
+        '<button class="btn btn--secondary" id="go-progress">' + MK.progress.getActive() + ' ' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
         '<button class="btn btn--ghost" id="go-settings">⚙️ ' + t('btn_settings') + '</button>' +
       '</div>' +
       '<h3 class="mt">' + t('choose_table') + '</h3>' +
@@ -222,14 +256,14 @@
     const level = MK.engine.levelOfTable(table);
     const playerLevel = MK.progress.get().level;
     // Mode libre → tous les jeux ; sinon jeux du niveau de la table débloqués par le joueur
-    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak'];
+    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak', 'review'];
     const games = MK.progress.getFreeMode()
       ? ALL_GAMES
       : MK.engine.gamesForLevel(level).filter(function (g) {
           return MK.engine.gamesForLevel(playerLevel).indexOf(g) !== -1;
         });
 
-    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak' };
+    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak', review: 'game_review' };
     const list = games.map(function (g) {
       return '<button class="btn btn--primary" data-game="' + g + '">' + t(labels[g]) + '</button>';
     }).join('');
@@ -274,9 +308,13 @@
       '<div class="screen-enter">' +
       '<p class="screen-sub center">' + t('study_hint') + '</p>' +
       '<div class="study-list" id="study-list">' + rows + '</div>' +
-      '<div class="row mt"><button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button></div>' +
+      '<div class="row mt">' +
+        '<button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button>' +
+        '<button class="btn btn--ghost" id="study-print">' + t('print_table') + '</button>' +
+      '</div>' +
       '</div>';
     wireTopbar();
+    el('study-print').addEventListener('click', function () { printView('table', table); });
 
     // Phrases à prononcer (intro + lignes ×1..×10) — index aligné avec data-i (ligne k = i=k)
     const lines = [t('table_of') + ' ' + table];
@@ -313,7 +351,7 @@
     const table = parseInt(params.table, 10) || 2;
     const level = parseInt(params.level, 10) || MK.engine.levelOfTable(table);
     const gameKey = params.game || 'flashcard';
-    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak' };
+    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak', review: 'Review' };
     const Cls = MK.games[map[gameKey]];
 
     app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) + '<div id="game-host"></div>';
@@ -355,18 +393,35 @@
         '<div class="badge-lbl">' + lbl + '</div></div>';
     }).join('');
 
+    // Table de Pythagore 10×10 colorée par maîtrise (apprentissage visuel)
+    let py = '<div class="pythagore"><div class="py-cell py-head">×</div>';
+    for (let b = 1; b <= 10; b++) py += '<div class="py-cell py-head">' + b + '</div>';
+    for (let a = 1; a <= 10; a++) {
+      py += '<div class="py-cell py-head">' + a + '</div>';
+      for (let b = 1; b <= 10; b++) {
+        const m = MK.progress.factMastery(a, b);
+        py += '<div class="py-cell py-m' + m + '">' + (a * b) + '</div>';
+      }
+    }
+    py += '</div>';
+
     app.innerHTML = topbar({ back: true, title: t('my_progress') }) +
       '<div class="screen-enter">' +
+      '<div class="center" style="font-size:2rem">' + MK.progress.getActive() + '</div>' +
       '<div class="stat-row">' +
         '<div class="stat"><div class="num">' + p.xp + '</div><div class="lbl">' + t('total_xp') + '</div></div>' +
         '<div class="stat"><div class="num">' + MK.progress.masteredCount() + '</div><div class="lbl">' + t('tables_mastered') + '</div></div>' +
         '<div class="stat"><div class="num">🔥 ' + p.streak + '</div><div class="lbl">' + t('day_streak') + '</div></div>' +
       '</div>' +
-      '<h3>' + t('choose_table') + '</h3>' + rows +
+      '<h3>' + t('pythagore') + '</h3>' +
+      '<p class="screen-sub">' + t('pythagore_hint') + '</p>' + py +
+      '<h3 class="mt-lg">' + t('choose_table') + '</h3>' + rows +
       '<h3 class="mt-lg">' + t('badges') + '</h3>' +
       '<div class="badges">' + badgesHtml + '</div>' +
+      '<div class="row mt-lg"><button class="btn btn--accent" id="pr-diploma">' + t('print_diploma') + '</button></div>' +
       '</div>';
     wireTopbar();
+    el('pr-diploma').addEventListener('click', function () { printView('diploma'); });
   }
 
   function screenSettings() {
@@ -396,8 +451,19 @@
 
     const free = MK.progress.getFreeMode();
 
+    // Profils (par avatar)
+    const profs = MK.progress.listProfiles();
+    const act = MK.progress.getActive();
+    const profChips = profs.map(function (av) {
+      return '<button class="chip avatar-chip ' + (av === act ? 'active' : '') + '" data-profile="' + av + '">' + av + '</button>';
+    }).join('');
+    const addChip = MK.progress.availableAvatars().length ? '<button class="chip" id="prof-add">➕</button>' : '';
+    const delChip = (profs.length > 1) ? '<button class="chip" id="prof-del" style="color:var(--color-error)">🗑️</button>' : '';
+
     app.innerHTML = topbar({ back: true, noSettings: true, title: t('settings') }) +
       '<div class="screen-enter card">' +
+      '<h3>' + t('profiles') + '</h3>' +
+      '<div class="choice-row">' + profChips + addChip + delChip + '</div>' +
       '<h3>' + t('language') + '</h3>' +
       '<div class="choice-row">' +
         '<button class="chip ' + (lang === 'fr' ? 'active' : '') + '" data-set-lang="fr">🇫🇷 Français</button>' +
@@ -419,12 +485,24 @@
       '<p class="screen-sub">' + t('free_mode_hint') + '</p>' +
 
       '<h3>' + t('theme') + '</h3>' +
-      '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + '</div>' +
+      '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + themeChip('candy', 'theme_candy') + '</div>' +
       '<div class="mt-lg"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
       '<div class="mt"><button class="btn btn--ghost" id="set-reset" style="color:var(--color-error);border-color:var(--color-error)">🗑️ ' + t('reset') + '</button></div>' +
       '</div>';
 
     wireTopbar();
+    // Profils
+    app.querySelectorAll('[data-profile]').forEach(function (b) {
+      b.addEventListener('click', function () { MK.progress.setActive(b.dataset.profile); render(); });
+    });
+    if (el('prof-add')) el('prof-add').addEventListener('click', function () {
+      showAvatarPicker(function (av) { if (av) { MK.progress.addProfile(av); render(); } });
+    });
+    if (el('prof-del')) el('prof-del').addEventListener('click', function () {
+      showConfirm(t('delete_profile') + ' ' + MK.progress.getActive() + ' ?').then(function (ok) {
+        if (ok) { MK.progress.deleteProfile(MK.progress.getActive()); render(); }
+      });
+    });
     app.querySelectorAll('[data-set-lang]').forEach(function (b) {
       b.addEventListener('click', function () { MK.i18n.setLang(b.dataset.setLang); });
     });

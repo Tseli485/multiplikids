@@ -394,6 +394,45 @@ img, svg { display: block; max-width: 100%; }
 @media (min-width: 768px) { .study-row { font-size: 1.7rem; min-height: 62px; } }
 @media (min-width: 1024px) { .study-row { font-size: 1.9rem; min-height: 68px; } }
 
+/* ---------- Profils (avatars) ---------- */
+.avatar-chip { font-size: 1.5rem; padding: 8px 14px; }
+.avatar-chip.active { background: var(--color-accent); }
+.avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+.avatar-pick {
+  font-size: 1.9rem; min-height: 58px; border-radius: 14px;
+  background: var(--color-surface-2); color: #fff; box-shadow: var(--shadow-soft);
+  transition: transform .12s;
+}
+.avatar-pick:hover { transform: scale(1.1); }
+
+/* ---------- Table de Pythagore (heatmap de maîtrise) ---------- */
+.pythagore { display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; margin: 10px 0; }
+.py-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: .6rem; border-radius: 4px; background: var(--color-surface-2); color: var(--color-text-dim);
+}
+.py-head { background: transparent; color: var(--color-accent); font-family: var(--font-display); font-size: .7rem; }
+.py-m0 { opacity: .45; }                                   /* à découvrir (gris) */
+.py-m1 { background: var(--color-primary); color: #fff; }   /* en cours (orange) */
+.py-m2 { background: #ffb454; color: #3a2400; }             /* bien (ambre) */
+.py-m3 { background: var(--color-success); color: #03261c; }/* maîtrisé (vert) */
+@media (min-width: 600px) { .py-cell { font-size: .9rem; } .py-head { font-size: 1rem; } }
+
+/* ---------- Impression / PDF ---------- */
+#print-area { display: none; }
+@media print {
+  body { background: #fff !important; }
+  #app, #bg-decor, #toast, #confetti-canvas, .modal-overlay { display: none !important; }
+  #print-area { display: block !important; color: #000; font-family: Georgia, serif; }
+  .diploma { text-align: center; border: 6px double #c8a24a; border-radius: 16px; padding: 48px 24px; margin: 24px; }
+  .diploma h1 { font-size: 2.2rem; letter-spacing: 3px; margin: 10px 0; }
+  .dip-emoji { font-size: 4rem; } .dip-av { font-size: 5rem; margin: 10px 0; }
+  .dip-text { font-size: 1.5rem; } .dip-meta { font-size: 1.1rem; color: #444; }
+  .dip-sign { margin-top: 36px; font-style: italic; color: #888; }
+  .print-table h1 { text-align: center; font-size: 1.9rem; }
+  .print-table .pr-row { text-align: center; font-size: 1.7rem; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+}
+
 /* ---------- Jeu ORAL (micro) ---------- */
 .mic-btn {
   width: 110px; height: 110px; border-radius: 50%;

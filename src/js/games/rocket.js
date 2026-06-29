@@ -111,6 +111,7 @@
       this.locked = true;
       const elapsed = performance.now() - this.tStart;
       const ok = value === this.q.answer;
+      MK.progress.recordFact(this.q.a, this.q.b, ok);
       const fb = this.host.querySelector('#rk-fb');
       this.answered++;
 
