@@ -254,7 +254,7 @@
     try { rec = new SR(); } catch (e) { if (opts.onError) opts.onError('unsupported'); return null; }
     rec.lang = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
     rec.interimResults = false;
-    rec.maxAlternatives = 5;       // plusieurs hypothèses → meilleure chance de matcher
+    rec.maxAlternatives = 8;       // plus d'hypothèses → meilleure reconnaissance de l'enfant
     rec.continuous = !!opts.continuous; // session permanente si demandé
     rec.onresult = function (e) {
       const alts = [];

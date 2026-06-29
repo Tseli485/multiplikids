@@ -99,6 +99,11 @@
       speak_mic_error: 'Micro indisponible',
       speak_mic_denied: 'Autorise le micro pour jouer 🎤',
       speak_need_https: 'Le micro marche en ligne (https) ou sur localhost, pas en ouverture directe du fichier.',
+      speak_ready: 'À toi ! 🎤 Dis la réponse',
+      speak_almost: 'Presque ! 😊 Essaie encore, tranquillement',
+      speak_again_kind: 'Essaie encore',
+      speak_reveal_kind: 'Pas grave ! La réponse est',
+      speak_bravo_kind: 'Super ! 🌟',
     },
     el: {
       app_name: 'MultipliKids',
@@ -192,6 +197,11 @@
       speak_mic_error: 'Το μικρόφωνο δεν είναι διαθέσιμο',
       speak_mic_denied: 'Επίτρεψε το μικρόφωνο για να παίξεις 🎤',
       speak_need_https: 'Το μικρόφωνο δουλεύει online (https) ή σε localhost, όχι με άνοιγμα του αρχείου απευθείας.',
+      speak_ready: 'Η σειρά σου! 🎤 Πες την απάντηση',
+      speak_almost: 'Σχεδόν! 😊 Δοκίμασε ξανά, με την ησυχία σου',
+      speak_again_kind: 'Δοκίμασε ξανά',
+      speak_reveal_kind: 'Δεν πειράζει! Η απάντηση είναι',
+      speak_bravo_kind: 'Τέλεια! 🌟',
     },
   };
 

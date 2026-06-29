@@ -691,6 +691,11 @@ body[data-theme="jungle"] .leaf {
       speak_mic_error: 'Micro indisponible',
       speak_mic_denied: 'Autorise le micro pour jouer 🎤',
       speak_need_https: 'Le micro marche en ligne (https) ou sur localhost, pas en ouverture directe du fichier.',
+      speak_ready: 'À toi ! 🎤 Dis la réponse',
+      speak_almost: 'Presque ! 😊 Essaie encore, tranquillement',
+      speak_again_kind: 'Essaie encore',
+      speak_reveal_kind: 'Pas grave ! La réponse est',
+      speak_bravo_kind: 'Super ! 🌟',
     },
     el: {
       app_name: 'MultipliKids',
@@ -784,6 +789,11 @@ body[data-theme="jungle"] .leaf {
       speak_mic_error: 'Το μικρόφωνο δεν είναι διαθέσιμο',
       speak_mic_denied: 'Επίτρεψε το μικρόφωνο για να παίξεις 🎤',
       speak_need_https: 'Το μικρόφωνο δουλεύει online (https) ή σε localhost, όχι με άνοιγμα του αρχείου απευθείας.',
+      speak_ready: 'Η σειρά σου! 🎤 Πες την απάντηση',
+      speak_almost: 'Σχεδόν! 😊 Δοκίμασε ξανά, με την ησυχία σου',
+      speak_again_kind: 'Δοκίμασε ξανά',
+      speak_reveal_kind: 'Δεν πειράζει! Η απάντηση είναι',
+      speak_bravo_kind: 'Τέλεια! 🌟',
     },
   };
 
@@ -1079,7 +1089,7 @@ body[data-theme="jungle"] .leaf {
     try { rec = new SR(); } catch (e) { if (opts.onError) opts.onError('unsupported'); return null; }
     rec.lang = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
     rec.interimResults = false;
-    rec.maxAlternatives = 5;       // plusieurs hypothèses → meilleure chance de matcher
+    rec.maxAlternatives = 8;       // plus d'hypothèses → meilleure reconnaissance de l'enfant
     rec.continuous = !!opts.continuous; // session permanente si demandé
     rec.onresult = function (e) {
       const alts = [];
@@ -2425,11 +2435,12 @@ body[data-theme="jungle"] .leaf {
 
 /* ============================================================
    MultipliKids — games/speak.js
-   Jeu ORAL 🎤 : l'enfant RÉPOND À VOIX HAUTE (dans sa langue).
-   MICRO PERMANENT : une seule session de reconnaissance CONTINUE reste ouverte
-   tout le jeu (relancée si elle se termine). Pendant que l'app parle, on ignore
-   simplement le micro (drapeau `speaking`) → il ne se coupe jamais.
-   Calcul énoncé UNE fois ; correct → suivant ; faux → réessayer.
+   Jeu ORAL 🎤 pour ENFANT : patient et bienveillant.
+   - Le calcul est énoncé UNE fois, puis le micro s'ouvre DÈS la fin de l'annonce.
+   - Le micro reste ouvert et ATTEND l'enfant aussi longtemps qu'il faut
+     (le silence ne déclenche aucun reproche : on se ré-arme en silence).
+   - Le micro ne s'ouvre jamais PENDANT que l'app parle → il ne s'entend pas lui-même.
+   - Erreur → encouragement DOUX, jamais de réprimande.
    Nécessite micro + contexte sécurisé (https/localhost) + Internet.
    ============================================================ */
 (function () {
@@ -2437,8 +2448,8 @@ body[data-theme="jungle"] .leaf {
   window.MK = window.MK || {}; MK.games = MK.games || {};
   const t = function (k) { return MK.i18n.t(k); };
   const MAX = 10;
-  const MAX_TRIES = 3;
-  const MAX_ERR = 8;
+  const GENTLE_TRIES = 3;   // après 3 essais, on donne gentiment la réponse et on avance
+  const NET_MAX = 10;       // erreurs réseau d'affilée avant message « vérifie Internet »
 
   class Speak {
     constructor(host, opts) {
@@ -2448,9 +2459,9 @@ body[data-theme="jungle"] .leaf {
       this.i = 1; this.correct = 0; this.attempts = 0;
       this.rec = null;
       this.active = false;     // jeu en cours
-      this.speaking = false;   // l'app parle → on ignore le micro (sans le couper)
-      this.starting = false;   // une (re)création de session est en cours
-      this.errCount = 0;
+      this.speaking = false;   // l'app parle → micro fermé pendant ce temps
+      this.opening = false;    // une ouverture de session est en cours
+      this.netErr = 0;
       this.timers = [];
     }
 
@@ -2459,10 +2470,9 @@ body[data-theme="jungle"] .leaf {
     clearTimers() { this.timers.forEach(clearTimeout); this.timers = []; }
 
     start() {
-      this.i = 1; this.correct = 0; this.errCount = 0; this.active = true;
+      this.i = 1; this.correct = 0; this.netErr = 0; this.active = true;
       if (!MK.audio.canRecognize()) { this.renderUnsupported(); return; }
       this.next();
-      this.startMic();   // ouvre le micro et le garde ouvert en permanence
     }
 
     renderUnsupported() {
@@ -2486,48 +2496,58 @@ body[data-theme="jungle"] .leaf {
             '<span>' + t('table_of') + ' ' + a + '</span>' +
             '<span class="score">' + this.correct + ' / ' + MAX + '</span>' +
           '</div>' +
-          '<p class="center" style="color:var(--color-text-dim)">' + t('speak_say') + '</p>' +
+          '<p class="center" id="sp-hint" style="color:var(--color-text-dim)">' + t('speak_say') + '</p>' +
           '<div class="question-big">' + a + ' × ' + b + ' = ?</div>' +
-          '<div class="center"><button class="mic-btn listening" id="sp-mic" aria-label="' + t('speak_say') + '">🎤</button></div>' +
+          '<div class="center"><button class="mic-btn" id="sp-mic" aria-label="' + t('speak_say') + '">🎤</button></div>' +
           '<div class="feedback" id="sp-fb" role="status"></div>' +
           '<div class="center" id="sp-heard" style="color:var(--color-text-dim);min-height:1.4em"></div>' +
           '<div class="row mt" id="sp-actions"></div>' +
           '<div class="game-hud"><span class="score">' + this.i + ' / ' + MAX + '</span></div>' +
         '</div>';
-      // le micro reste TOUJOURS ouvert : le bouton sert juste à le relancer s'il a planté
+      // bouton micro = relance manuelle (au cas où)
       const mic = this.host.querySelector('#sp-mic');
-      mic.addEventListener('click', () => { this.errCount = 0; this.startMic(); });
-      // annonce le calcul UNE fois ; le micro se rouvre DÈS la fin de l'annonce
-      // (pas de délai fixe → l'enfant peut répondre tout de suite)
-      this.speaking = true;
-      MK.audio.speakOperation(a, b, undefined, () => { this.speaking = false; });
+      mic.addEventListener('click', () => { this.netErr = 0; this.speaking = false; this.openMic(true); });
+      // énonce le calcul UNE fois, PUIS ouvre le micro (jamais pendant l'annonce)
+      this.announce(a, b);
     }
 
-    // Ouvre (ou rouvre) la session de reconnaissance CONTINUE — micro permanent
-    startMic() {
-      if (!this.active || this.starting) return;
-      this.starting = true;
-      this.stopRec();
+    announce(a, b) {
+      this.speaking = true;
+      this.closeMic();
+      this.setMic(false);
+      MK.audio.speakOperation(a, b, undefined, () => {
+        this.speaking = false;
+        this.openMic();   // micro prêt dès la fin de l'annonce
+      });
+    }
+
+    // Ouvre la session d'écoute (continue) et la garde ouverte ; PATIENTE.
+    openMic(force) {
+      if (!this.active || this.speaking) return;
+      if (this.rec && !force) return;
+      if (this.opening) return;
+      this.opening = true;
+      this.closeMic();
       MK.audio.resume();
       this.setMic(true);
+      const hint = this.host.querySelector('#sp-hint');
+      if (hint) hint.textContent = t('speak_ready');
       const self = this;
       this.rec = MK.audio.listen(this.code(), {
         continuous: true,
         onResult: function (alts) { self.onSaid(alts); },
-        onError: function (err) { self.starting = false; self.onErr(err); },
+        onError: function (err) { self.opening = false; self.onErr(err); },
         onEnd: function () {
-          self.starting = false;
-          // session terminée (silence/limite navigateur) → on RELANCE → micro permanent
-          if (self.active) self.later(function () { self.startMic(); }, 300);
-          else self.setMic(false);
+          self.opening = false; self.rec = null; self.setMic(false);
+          // silence / fin de session → on rouvre en SILENCE (aucun reproche, attente illimitée)
+          if (self.active && !self.speaking) self.later(function () { self.openMic(); }, 250);
         },
       });
-      // onstart non garanti : on libère le verrou peu après
-      this.later(() => { this.starting = false; }, 600);
-      if (!this.rec) { this.starting = false; this.setMic(false); }
+      this.later(() => { this.opening = false; }, 700);
+      if (!this.rec) { this.opening = false; this.setMic(false); }
     }
 
-    stopRec() {
+    closeMic() {
       if (this.rec) { try { this.rec.abort ? this.rec.abort() : this.rec.stop(); } catch (e) {} this.rec = null; }
     }
 
@@ -2537,73 +2557,75 @@ body[data-theme="jungle"] .leaf {
     }
 
     onSaid(alts) {
-      if (!this.active || this.speaking) return;   // ignore la voix de l'app / hors-jeu
-      const heard = this.host.querySelector('#sp-heard');
-      const fb = this.host.querySelector('#sp-fb');
+      if (!this.active || this.speaking) return;   // ignore tant que l'app parle
       const said = (alts && alts[0]) ? alts[0] : '';
       if (!said) return;
+      const heard = this.host.querySelector('#sp-heard');
+      const fb = this.host.querySelector('#sp-fb');
       if (heard) heard.textContent = '« ' + said + ' »';
-      this.errCount = 0;
+      this.netErr = 0;
 
       const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
       if (ok) {
-        // BONNE réponse → question suivante (sans redire le calcul). Micro garde ouvert.
-        this.speaking = true; // ignore le micro pendant la transition + annonce suivante
+        this.speaking = true; this.closeMic(); this.setMic(false);
         this.correct++;
-        if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
+        if (fb) { fb.textContent = t('speak_bravo_kind'); fb.className = 'feedback ok celebrate'; }
         MK.audio.playCorrect();
         MK.progress.addXP(10);
         this.i++;
-        this.later(() => this.next(), 1000);
+        this.later(() => this.next(), 1100);   // → calcul suivant (annoncé une fois)
       } else {
-        // réponse FAUSSE
         this.attempts++;
-        MK.audio.playWrong();
-        MK.visual.shake(this.host.querySelector('.game-stage'));
-        if (this.attempts >= MAX_TRIES) {
-          this.speaking = true;
-          if (fb) { fb.textContent = t('speak_show_answer') + ' ' + this.answer; fb.className = 'feedback ko'; }
-          MK.audio.speakOperation(this.table, this.i, this.answer);
-          this.i++;
-          this.later(() => this.next(), 2200);
+        if (this.attempts >= GENTLE_TRIES) {
+          // on donne GENTIMENT la réponse puis on avance (l'enfant n'est jamais bloqué)
+          this.speaking = true; this.closeMic(); this.setMic(false);
+          if (fb) { fb.textContent = t('speak_reveal_kind') + ' ' + this.answer; fb.className = 'feedback'; }
+          MK.audio.playTick();
+          MK.audio.speakOperation(this.table, this.i, this.answer, () => {
+            this.i++; this.later(() => this.next(), 200);
+          });
         } else {
-          // on REDEMANDE (voix courte) ; micro rouvert dès la fin de l'invite
-          if (fb) { fb.textContent = t('wrong') + ' ' + t('speak_try_again'); fb.className = 'feedback ko'; }
-          this.speaking = true;
-          MK.audio.speak(t('speak_try_again'), this.code(), () => { this.speaking = false; });
+          // encouragement DOUX, puis on rouvre le micro tranquillement
+          if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
+          MK.audio.playTick();
+          this.speaking = true; this.closeMic();
+          MK.audio.speak(t('speak_again_kind'), this.code(), () => { this.speaking = false; this.openMic(); });
         }
       }
     }
 
     onErr(err) {
-      // transitoires → la session se relancera via onEnd → micro reste permanent
-      if (err === 'no-speech' || err === 'aborted' || err === 'network' || err === 'audio-capture') {
-        this.errCount++;
-        if (this.errCount >= MAX_ERR) this.hardStop('error');
-        return;
+      this.setMic(false);
+      if (err === 'no-speech' || err === 'aborted' || err === 'audio-capture') {
+        return; // PATIENT : aucun reproche, onEnd rouvrira le micro
       }
-      this.hardStop(err); // refus micro / indisponible
+      if (err === 'network') {
+        this.netErr++;
+        if (this.netErr >= NET_MAX) { const fb = this.host.querySelector('#sp-fb'); if (fb) { fb.textContent = t('speak_mic_error'); fb.className = 'feedback'; } }
+        return; // on continue d'essayer
+      }
+      this.hardStop(err); // micro refusé / indisponible
     }
 
     hardStop(err) {
-      this.active = false; this.stopRec(); this.clearTimers(); this.setMic(false);
+      this.active = false; this.closeMic(); this.clearTimers(); this.setMic(false);
       const fb = this.host.querySelector('#sp-fb');
       const denied = (err === 'not-allowed' || err === 'service-not-allowed');
-      if (fb) { fb.textContent = denied ? t('speak_mic_denied') : t('speak_mic_error'); fb.className = 'feedback ko'; }
+      if (fb) { fb.textContent = denied ? t('speak_mic_denied') : t('speak_mic_error'); fb.className = 'feedback'; }
       const actions = this.host.querySelector('#sp-actions');
       if (actions) {
         actions.innerHTML =
           '<button class="btn btn--primary" id="sp-retry">🎤</button>' +
           '<button class="btn btn--ghost" id="sp-skip">' + t('btn_next') + ' →</button>';
         const r = actions.querySelector('#sp-retry');
-        if (r) r.addEventListener('click', () => { this.errCount = 0; this.active = true; this.startMic(); });
+        if (r) r.addEventListener('click', () => { this.netErr = 0; this.active = true; this.speaking = false; this.openMic(true); });
         const s = actions.querySelector('#sp-skip');
-        if (s) s.addEventListener('click', () => { this.active = true; this.i++; this.next(); this.startMic(); });
+        if (s) s.addEventListener('click', () => { this.active = true; this.i++; this.next(); });
       }
     }
 
     finish() {
-      this.active = false; this.stopRec(); this.clearTimers();
+      this.active = false; this.closeMic(); this.clearTimers();
       const percent = MK.engine.pct(this.correct, MAX);
       this.host.innerHTML =
         '<div class="game-stage center screen-enter">' +
@@ -2613,14 +2635,14 @@ body[data-theme="jungle"] .leaf {
           '<div class="row mt"><button class="btn btn--primary" id="sp-again">' + t('btn_replay') + '</button></div>' +
         '</div>';
       this.host.querySelector('#sp-again').addEventListener('click', () => this.start());
-      if (percent >= 80) MK.visual.confetti();
+      if (percent >= 70) MK.visual.confetti();
       this.onFinish({ table: this.table, correct: this.correct, total: MAX, percent: percent, speedBonus: false });
     }
 
     stop() {
       this.active = false; this.speaking = true;
       this.clearTimers();
-      this.stopRec();
+      this.closeMic();
     }
   }
 
