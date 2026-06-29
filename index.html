@@ -447,6 +447,35 @@ img, svg { display: block; max-width: 100%; }
   .print-table .pr-row { text-align: center; font-size: 1.7rem; padding: 8px 0; border-bottom: 1px dashed #ccc; }
 }
 
+/* ---------- Boutique 🪙 ---------- */
+.shop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+.shop-item {
+  aspect-ratio: 1; border-radius: 14px; background: var(--color-surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  box-shadow: var(--shadow-soft); color: var(--color-text);
+}
+.shop-item .shop-e { font-size: 2rem; }
+.shop-item .shop-p { font-size: .8rem; color: var(--color-text-dim); }
+.shop-item.owned { background: var(--color-success); color: #03261c; }
+.shop-item.owned .shop-p { color: #03261c; }
+@media (min-width: 600px) { .shop-grid { grid-template-columns: repeat(6, 1fr); } }
+
+/* ---------- Duel ⚔️ ---------- */
+.duel-turn { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px; }
+.duel-p1 .duel-turn { color: #4ea8ff; }
+.duel-p2 .duel-turn { color: #ff6b6b; }
+.duel-s1 { color: #4ea8ff; font-weight: 800; }
+.duel-s2 { color: #ff6b6b; font-weight: 800; }
+
+/* ---------- Accessibilité : lecture facile + fort contraste ---------- */
+body.a11y-dys, body.a11y-dys * { font-family: 'Nunito', Verdana, Tahoma, sans-serif !important; letter-spacing: .03em; }
+body.a11y-dys { line-height: 1.7; word-spacing: .08em; }
+body.a11y-contrast {
+  --color-bg: #000; --color-surface: #141414; --color-surface-2: #262626;
+  --color-text: #ffffff; --color-text-dim: #e0e0e0;
+}
+body.a11y-contrast .btn, body.a11y-contrast .answer-btn, body.a11y-contrast .table-tile { outline: 2px solid #ffffff; }
+
 /* ---------- Jeu ORAL (micro) ---------- */
 .mic-btn {
   width: 110px; height: 110px; border-radius: 50%;
@@ -774,6 +803,33 @@ body[data-theme="candy"] .candy {
       print_diploma: 'Mon diplôme 🏅',
       diploma_title: 'DIPLÔME DES TABLES',
       diploma_text: 'a appris ses tables de multiplication !',
+      game_inverse: '🔢 Trouve le facteur',
+      challenge: 'Défi du jour 🏆',
+      challenge_done: 'Défi réussi aujourd\'hui ✅',
+      duel: 'Duel ⚔️',
+      duel_2p: '⚔️ Duel à 2',
+      duel_turn: 'à toi !',
+      duel_wins: 'gagne ! 🎉',
+      duel_tie: 'Égalité ! 🤝',
+      shop: 'Boutique 🪙',
+      coins: 'pièces',
+      shop_locked: 'Pas assez de pièces 🔒',
+      shop_bought: 'Débloqué ! 🎉',
+      parent_space: '👨‍👩‍👧 Espace parent',
+      enter_pin: 'Code parent (4 chiffres)',
+      set_pin: 'Crée un code à 4 chiffres',
+      wrong_pin: 'Code incorrect',
+      playtime: 'Temps de jeu',
+      weak_facts: 'À retravailler',
+      none_weak: 'Rien à signaler 👍',
+      report_print: '🖨️ Imprimer le bilan',
+      reading_help: 'Confort de lecture',
+      dyslexia: '🔤 Police facile à lire',
+      contrast: '🌗 Fort contraste',
+      reminder: '🔔 Rappel quotidien',
+      reminder_title: 'MultipliKids',
+      reminder_body: 'C\'est l\'heure des tables ! 🎲',
+      melody: '🎶 Chanson',
     },
     el: {
       app_name: 'MultipliKids',
@@ -885,6 +941,33 @@ body[data-theme="candy"] .candy {
       print_diploma: 'Το δίπλωμά μου 🏅',
       diploma_title: 'ΔΙΠΛΩΜΑ ΠΡΟΠΑΙΔΕΙΑΣ',
       diploma_text: 'έμαθε την προπαίδεια!',
+      game_inverse: '🔢 Βρες τον παράγοντα',
+      challenge: 'Πρόκληση της ημέρας 🏆',
+      challenge_done: 'Η πρόκληση ολοκληρώθηκε σήμερα ✅',
+      duel: 'Μονομαχία ⚔️',
+      duel_2p: '⚔️ Μονομαχία 2 παικτών',
+      duel_turn: 'η σειρά σου!',
+      duel_wins: 'κερδίζει! 🎉',
+      duel_tie: 'Ισοπαλία! 🤝',
+      shop: 'Κατάστημα 🪙',
+      coins: 'νομίσματα',
+      shop_locked: 'Δεν έχεις αρκετά νομίσματα 🔒',
+      shop_bought: 'Ξεκλειδώθηκε! 🎉',
+      parent_space: '👨‍👩‍👧 Χώρος γονέα',
+      enter_pin: 'Κωδικός γονέα (4 ψηφία)',
+      set_pin: 'Φτιάξε κωδικό 4 ψηφίων',
+      wrong_pin: 'Λάθος κωδικός',
+      playtime: 'Χρόνος παιχνιδιού',
+      weak_facts: 'Για εξάσκηση',
+      none_weak: 'Όλα καλά 👍',
+      report_print: '🖨️ Εκτύπωση αναφοράς',
+      reading_help: 'Άνεση ανάγνωσης',
+      dyslexia: '🔤 Εύκολη γραμματοσειρά',
+      contrast: '🌗 Υψηλή αντίθεση',
+      reminder: '🔔 Καθημερινή υπενθύμιση',
+      reminder_title: 'MultipliKids',
+      reminder_body: 'Ώρα για προπαίδεια! 🎲',
+      melody: '🎶 Τραγούδι',
     },
   };
 
@@ -1053,6 +1136,14 @@ body[data-theme="candy"] .candy {
   }
   function playTick() { tone(880, 0, 0.06, 'square', 0.08); }
 
+  // Comptine de la table : une note (gamme pentatonique) par multiple ×1..×10.
+  // Aide la mémorisation auditive (motif mélodique propre à chaque table).
+  function playMelody() {
+    const penta = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+    for (let i = 0; i < 10; i++) tone(penta[i], i * 0.34, 0.30, 'triangle', 0.18);
+    tone(1046.5, 10 * 0.34, 0.5, 'sine', 0.16); // note finale
+  }
+
   /* ---------- Prononciation (Web Speech API) ---------- */
   // Énonce un texte clairement dans la langue donnée.
   // La voix est choisie AU MOMENT de parler (après chargement des voix) → la
@@ -1206,7 +1297,7 @@ body[data-theme="candy"] .candy {
   function primeVoices() { whenVoicesReady(function () {}); }
 
   window.MK.audio = {
-    playCorrect: playCorrect, playWrong: playWrong, playFanfare: playFanfare, playTick: playTick,
+    playCorrect: playCorrect, playWrong: playWrong, playFanfare: playFanfare, playTick: playTick, playMelody: playMelody,
     speak: speak, speakOperation: speakOperation, cancel: cancel,
     narrate: narrate, stopSpeech: stopSpeech,
     setEnabled: setEnabled, isEnabled: isEnabled, resume: ensureCtx,
@@ -1500,6 +1591,10 @@ body[data-theme="candy"] .candy {
       badges: [], streak: 0, lastPlayDay: null,
       lang: (MK.i18n ? MK.i18n.getLang() : 'el'),
       freeMode: true,
+      playSec: 0,            // temps de jeu cumulé (espace parent)
+      owned: [],             // articles débloqués (boutique)
+      spent: 0,              // XP dépensées (boutique)
+      lastChallengeDay: null,// défi du jour
     };
   }
 
@@ -1690,6 +1785,27 @@ body[data-theme="candy"] .candy {
   function tablePercent(table) { const T = state.tables[String(table)]; return T ? T.avgScore : 0; }
   function masteredCount() { return Object.keys(state.tables).filter(function (k) { return state.tables[k].mastered; }).length; }
 
+  // ---------- Temps de jeu (espace parent) ----------
+  function addPlaySec(n) { state.playSec = (state.playSec || 0) + Math.max(0, n | 0); save(); }
+  function getPlaySec() { return state.playSec || 0; }
+
+  // ---------- Défi du jour ----------
+  function challengeDoneToday() { return state.lastChallengeDay === todayStr(); }
+  function markChallengeDone() { state.lastChallengeDay = todayStr(); save(); }
+
+  // ---------- Boutique (dépenser des XP, sans perdre le score total affiché) ----------
+  function coins() { return Math.max(0, (state.xp || 0) - (state.spent || 0)); }
+  function owns(id) { return (state.owned || []).indexOf(id) !== -1; }
+  function buy(id, price) {
+    if (owns(id)) return true;
+    if (coins() < price) return false;
+    state.owned = (state.owned || []).concat(id);
+    state.spent = (state.spent || 0) + price;
+    save();
+    return true;
+  }
+  function ownedList() { return (state.owned || []).slice(); }
+
   function reset() { state = defaultState(); save(); }
 
   window.MK.progress = {
@@ -1705,6 +1821,9 @@ body[data-theme="candy"] .candy {
     getFreeMode: getFreeMode, setFreeMode: setFreeMode,
     starsForTable: starsForTable, tablePercent: tablePercent,
     masteredCount: masteredCount,
+    addPlaySec: addPlaySec, getPlaySec: getPlaySec,
+    challengeDoneToday: challengeDoneToday, markChallengeDone: markChallengeDone,
+    coins: coins, owns: owns, buy: buy, ownedList: ownedList,
     reset: reset,
   };
 })();
@@ -2921,6 +3040,275 @@ body[data-theme="candy"] .candy {
 })();
 
 /* ============================================================
+   MultipliKids — games/inverse.js
+   TABLES INVERSÉES 🔢 : « 7 × ? = 56 » → trouver le facteur manquant.
+   Fait comprendre la division / les facteurs. QCM, ×1..×10.
+   Contrat : new Inverse(host, {table, level, onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+  const TOTAL_Q = 10;
+
+  function distractFactor(b) {
+    const set = new Set([b]);
+    let guard = 0;
+    while (set.size < 4 && guard < 50) {
+      const v = Math.min(10, Math.max(1, b + MK.engine.randInt(-3, 3)));
+      set.add(v); guard++;
+    }
+    return MK.engine.shuffle(Array.from(set));
+  }
+
+  class Inverse {
+    constructor(host, opts) {
+      this.host = host;
+      this.table = opts.table || 2;
+      this.onFinish = opts.onFinish || function () {};
+      this.qIndex = 0; this.correct = 0; this.locked = false;
+    }
+    start() { this.qIndex = 0; this.correct = 0; this.next(); }
+
+    next() {
+      if (this.qIndex >= TOTAL_Q) { this.finish(); return; }
+      this.locked = false;
+      const a = this.table, b = MK.engine.randInt(1, 10);
+      this.b = b; this.product = a * b;
+      this.options = distractFactor(b);
+      this.render();
+      MK.audio.speakOperation(a, b, this.product); // énonce le calcul complet (indice)
+    }
+
+    render() {
+      const a = this.table;
+      const opts = this.options.map(function (o) {
+        return '<button class="answer-btn" data-v="' + o + '">' + o + '</button>';
+      }).join('');
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud"><span>🔢 ' + t('table_of') + ' ' + a + '</span>' +
+            '<span class="score">' + t('score') + ' : ' + this.correct + '</span></div>' +
+          '<div class="question-big">' + a + ' × <span style="color:var(--color-accent)">?</span> = ' + this.product + '</div>' +
+          '<div class="answers">' + opts + '</div>' +
+          '<div class="feedback" id="iv-fb" role="status"></div>' +
+          '<div class="game-hud"><span class="score">' + (this.qIndex + 1) + ' / ' + TOTAL_Q + '</span></div>' +
+        '</div>';
+      const self = this;
+      this.host.querySelectorAll('.answer-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { self.choose(parseInt(btn.dataset.v, 10), btn); });
+      });
+    }
+
+    choose(value, btn) {
+      if (this.locked) return;
+      this.locked = true;
+      const ok = value === this.b;
+      MK.progress.recordFact(this.table, this.b, ok);
+      const fb = this.host.querySelector('#iv-fb');
+      if (ok) {
+        btn.classList.add('correct'); this.correct++; MK.progress.addXP(10);
+        if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
+        MK.audio.playCorrect();
+      } else {
+        btn.classList.add('wrong');
+        this.host.querySelectorAll('.answer-btn').forEach((b) => { if (parseInt(b.dataset.v, 10) === this.b) b.classList.add('correct'); });
+        if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
+        MK.audio.playWrong();
+      }
+      this.qIndex++;
+      setTimeout(() => this.next(), 1200);
+    }
+
+    finish() {
+      const percent = MK.engine.pct(this.correct, TOTAL_Q);
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">🔢 ' + t('level_done') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.6rem">' + this.correct + ' / ' + TOTAL_Q + '</p>' +
+          '<p>' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="iv-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#iv-again').addEventListener('click', () => this.start());
+      if (percent >= 70) MK.visual.confetti();
+      this.onFinish({ table: this.table, correct: this.correct, total: TOTAL_Q, percent: percent, speedBonus: false });
+    }
+    stop() {}
+  }
+  MK.games.Inverse = Inverse;
+})();
+
+/* ============================================================
+   MultipliKids — games/challenge.js
+   DÉFI DU JOUR 🏆 : QCM MIXTE (toutes les tables ×2..×10), 10 questions.
+   À faire une fois par jour → renforce la série 🔥. Bonus d'XP à la fin.
+   Contrat : new Challenge(host, {onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+  const TOTAL_Q = 10;
+
+  class Challenge {
+    constructor(host, opts) {
+      this.host = host;
+      this.onFinish = opts.onFinish || function () {};
+      this.qIndex = 0; this.correct = 0; this.locked = false;
+    }
+    start() { this.qIndex = 0; this.correct = 0; this.next(); }
+
+    next() {
+      if (this.qIndex >= TOTAL_Q) { this.finish(); return; }
+      this.locked = false;
+      this.q = MK.engine.makeQuiz(null); // table mixte
+      this.render();
+      MK.audio.speakOperation(this.q.a, this.q.b);
+    }
+
+    render() {
+      const opts = this.q.options.map(function (o) { return '<button class="answer-btn" data-v="' + o + '">' + o + '</button>'; }).join('');
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter">' +
+          '<div class="game-hud"><span>🏆 ' + t('challenge') + '</span>' +
+            '<span class="score">' + t('score') + ' : ' + this.correct + '</span></div>' +
+          '<div class="question-big">' + this.q.a + ' × ' + this.q.b + ' = ?</div>' +
+          '<div class="answers">' + opts + '</div>' +
+          '<div class="feedback" id="ch-fb" role="status"></div>' +
+          '<div class="game-hud"><span class="score">' + (this.qIndex + 1) + ' / ' + TOTAL_Q + '</span></div>' +
+        '</div>';
+      const self = this;
+      this.host.querySelectorAll('.answer-btn').forEach(function (b) { b.addEventListener('click', function () { self.choose(parseInt(b.dataset.v, 10), b); }); });
+    }
+
+    choose(value, btn) {
+      if (this.locked) return;
+      this.locked = true;
+      const ok = value === this.q.answer;
+      MK.progress.recordFact(this.q.a, this.q.b, ok);
+      const fb = this.host.querySelector('#ch-fb');
+      if (ok) {
+        btn.classList.add('correct'); this.correct++; MK.progress.addXP(10);
+        if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
+        MK.audio.playCorrect();
+      } else {
+        btn.classList.add('wrong');
+        this.host.querySelectorAll('.answer-btn').forEach((b) => { if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct'); });
+        if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
+        MK.audio.playWrong();
+      }
+      this.qIndex++;
+      setTimeout(() => this.next(), 1200);
+    }
+
+    finish() {
+      const percent = MK.engine.pct(this.correct, TOTAL_Q);
+      MK.progress.addXP(30);                 // bonus du défi
+      MK.progress.markChallengeDone();
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">🏆 ' + t('challenge') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.6rem">' + this.correct + ' / ' + TOTAL_Q + '</p>' +
+          '<p>+30 XP · ' + t(MK.engine.encourageKey(percent)) + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="ch-home">' + t('btn_home') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#ch-home').addEventListener('click', () => { location.hash = 'home'; });
+      if (percent >= 70) MK.visual.confetti(140);
+      this.onFinish({ percent: percent, correct: this.correct, total: TOTAL_Q });
+    }
+    stop() {}
+  }
+  MK.games.Challenge = Challenge;
+})();
+
+/* ============================================================
+   MultipliKids — games/duel.js
+   DUEL ⚔️ : 2 joueurs sur le même écran, à tour de rôle.
+   8 questions mixtes (4 chacun). Le plus de bonnes réponses gagne.
+   Contrat : new Duel(host, {onFinish}) → start()/stop()
+   ============================================================ */
+(function () {
+  'use strict';
+  window.MK = window.MK || {}; MK.games = MK.games || {};
+  const t = function (k) { return MK.i18n.t(k); };
+  const TOTAL_Q = 8;
+  const P = [{ tag: '🔵', cls: 'duel-p1' }, { tag: '🔴', cls: 'duel-p2' }];
+
+  class Duel {
+    constructor(host, opts) {
+      this.host = host;
+      this.onFinish = opts.onFinish || function () {};
+      this.qIndex = 0; this.scores = [0, 0]; this.turn = 0; this.locked = false;
+    }
+    start() { this.qIndex = 0; this.scores = [0, 0]; this.turn = 0; this.next(); }
+
+    next() {
+      if (this.qIndex >= TOTAL_Q) { this.finish(); return; }
+      this.locked = false;
+      this.q = MK.engine.makeQuiz(null);
+      this.render();
+      MK.audio.speakOperation(this.q.a, this.q.b);
+    }
+
+    render() {
+      const p = P[this.turn];
+      const opts = this.q.options.map(function (o) { return '<button class="answer-btn" data-v="' + o + '">' + o + '</button>'; }).join('');
+      this.host.innerHTML =
+        '<div class="game-stage screen-enter ' + p.cls + '">' +
+          '<div class="game-hud">' +
+            '<span class="duel-s1">🔵 ' + this.scores[0] + '</span>' +
+            '<span class="score">' + (this.qIndex + 1) + ' / ' + TOTAL_Q + '</span>' +
+            '<span class="duel-s2">🔴 ' + this.scores[1] + '</span>' +
+          '</div>' +
+          '<p class="center duel-turn">' + p.tag + ' ' + t('duel_turn') + '</p>' +
+          '<div class="question-big">' + this.q.a + ' × ' + this.q.b + ' = ?</div>' +
+          '<div class="answers">' + opts + '</div>' +
+          '<div class="feedback" id="du-fb" role="status"></div>' +
+        '</div>';
+      const self = this;
+      this.host.querySelectorAll('.answer-btn').forEach(function (b) { b.addEventListener('click', function () { self.choose(parseInt(b.dataset.v, 10), b); }); });
+    }
+
+    choose(value, btn) {
+      if (this.locked) return;
+      this.locked = true;
+      const ok = value === this.q.answer;
+      const fb = this.host.querySelector('#du-fb');
+      if (ok) {
+        btn.classList.add('correct'); this.scores[this.turn]++;
+        if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
+        MK.audio.playCorrect();
+      } else {
+        btn.classList.add('wrong');
+        this.host.querySelectorAll('.answer-btn').forEach((b) => { if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct'); });
+        if (fb) { fb.textContent = t('wrong'); fb.className = 'feedback ko'; }
+        MK.audio.playWrong();
+      }
+      this.qIndex++;
+      this.turn = 1 - this.turn;   // au joueur suivant
+      setTimeout(() => this.next(), 1200);
+    }
+
+    finish() {
+      const s = this.scores;
+      const winner = s[0] === s[1] ? t('duel_tie') : (s[0] > s[1] ? '🔵' : '🔴') + ' ' + t('duel_wins');
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<h2 class="screen-title">⚔️ ' + t('duel') + '</h2>' +
+          '<p class="celebrate" style="font-size:1.6rem">🔵 ' + s[0] + '  —  ' + s[1] + ' 🔴</p>' +
+          '<p style="font-size:1.3rem">' + winner + '</p>' +
+          '<div class="row mt"><button class="btn btn--primary" id="du-again">' + t('btn_replay') + '</button></div>' +
+        '</div>';
+      this.host.querySelector('#du-again').addEventListener('click', () => this.start());
+      MK.visual.confetti();
+      this.onFinish({ scores: s });
+    }
+    stop() {}
+  }
+  MK.games.Duel = Duel;
+})();
+
+/* ============================================================
    MultipliKids — app.js
    Init, routing SPA par hash, rendu des écrans, glue.
    Charge en DERNIER (dépend de i18n, audio, engine, progress, visual, games).
@@ -2935,6 +3323,29 @@ body[data-theme="candy"] .candy {
 
   // ---------- Helpers ----------
   function el(id) { return document.getElementById(id); }
+
+  // Préférences globales (appareil, pas par profil) : lecture, rappel, code parent
+  function getPref(k) { try { return localStorage.getItem('multiplikids_' + k); } catch (e) { return null; } }
+  function setPref(k, v) { try { v == null ? localStorage.removeItem('multiplikids_' + k) : localStorage.setItem('multiplikids_' + k, v); } catch (e) {} }
+  function applyA11y() {
+    document.body.classList.toggle('a11y-dys', getPref('dys') === '1');
+    document.body.classList.toggle('a11y-contrast', getPref('contrast') === '1');
+  }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // Rappel quotidien : notification à l'ouverture si activé et nouveau jour
+  function maybeReminder() {
+    try {
+      if (getPref('reminder') !== '1' || !('Notification' in window)) return;
+      if (getPref('reminded') === todayKey()) return;
+      if (Notification.permission === 'granted') {
+        new Notification(t('reminder_title'), { body: t('reminder_body') });
+        setPref('reminded', todayKey());
+      }
+    } catch (e) {}
+  }
 
   // Wake Lock : empêche l'écran de se verrouiller/éteindre pendant l'usage.
   // (nécessite https — actif sur GitHub Pages ; ignoré silencieusement sinon)
@@ -3018,6 +3429,16 @@ body[data-theme="candy"] .candy {
         '<p class="dip-text">' + t('diploma_text') + '</p>' +
         '<p class="dip-meta">⭐ ' + p.xp + ' XP · ' + MK.progress.masteredCount() + ' ' + t('tables_mastered') + '</p>' +
         '<p class="dip-sign">MultipliKids</p></div>';
+    } else if (kind === 'report') {
+      const p = MK.progress.get(); const sec = MK.progress.getPlaySec();
+      const mn = Math.floor(sec / 60);
+      const weak = MK.progress.weakestFacts(null, 10).filter(function (f) { return f.weakness > 0; })
+        .map(function (f) { return f.a + ' × ' + f.b; }).join(' · ') || t('none_weak');
+      host.innerHTML = '<div class="print-table"><h1>' + t('parent_space') + ' — ' + MK.progress.getActive() + '</h1>' +
+        '<div class="pr-row">XP : <b>' + p.xp + '</b></div>' +
+        '<div class="pr-row">' + t('tables_mastered') + ' : <b>' + MK.progress.masteredCount() + '</b></div>' +
+        '<div class="pr-row">' + t('playtime') + ' : <b>' + mn + ' min</b></div>' +
+        '<div class="pr-row">' + t('weak_facts') + ' : ' + weak + '</div></div>';
     } else {
       let rows = '';
       for (let i = 1; i <= 10; i++) rows += '<div class="pr-row">' + table + ' × ' + i + ' = <b>' + (table * i) + '</b></div>';
@@ -3158,6 +3579,13 @@ body[data-theme="candy"] .candy {
         '<button class="btn btn--secondary" id="go-progress">' + MK.progress.getActive() + ' ' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
         '<button class="btn btn--ghost" id="go-settings">⚙️ ' + t('btn_settings') + '</button>' +
       '</div>' +
+      '<div class="row" style="margin-bottom:8px">' +
+        '<button class="btn btn--accent" id="go-challenge">🏆 ' + t('challenge') + (MK.progress.challengeDoneToday() ? ' ✅' : '') + '</button>' +
+        '<button class="btn btn--primary" id="go-duel">' + t('duel_2p') + '</button>' +
+      '</div>' +
+      '<div class="row" style="margin-bottom:8px">' +
+        '<button class="btn btn--ghost" id="go-shop">' + t('shop') + ' (🪙 ' + MK.progress.coins() + ')</button>' +
+      '</div>' +
       '<h3 class="mt">' + t('choose_table') + '</h3>' +
       '<div class="table-grid">' + tilesHtml + '</div>' +
       '</div>';
@@ -3165,6 +3593,9 @@ body[data-theme="candy"] .candy {
     wireTopbar();
     el('go-progress').addEventListener('click', function () { navigate('progress'); });
     el('go-settings').addEventListener('click', function () { navigate('settings'); });
+    el('go-challenge').addEventListener('click', function () { MK.audio.resume(); navigate('challenge'); });
+    el('go-duel').addEventListener('click', function () { MK.audio.resume(); navigate('duel'); });
+    el('go-shop').addEventListener('click', function () { navigate('shop'); });
     app.querySelectorAll('.table-tile:not(.locked)').forEach(function (tile) {
       tile.addEventListener('click', function () {
         MK.audio.resume();
@@ -3178,14 +3609,14 @@ body[data-theme="candy"] .candy {
     const level = MK.engine.levelOfTable(table);
     const playerLevel = MK.progress.get().level;
     // Mode libre → tous les jeux ; sinon jeux du niveau de la table débloqués par le joueur
-    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak', 'review'];
+    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak', 'review', 'inverse'];
     const games = MK.progress.getFreeMode()
       ? ALL_GAMES
       : MK.engine.gamesForLevel(level).filter(function (g) {
           return MK.engine.gamesForLevel(playerLevel).indexOf(g) !== -1;
         });
 
-    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak', review: 'game_review' };
+    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak', review: 'game_review', inverse: 'game_inverse' };
     const list = games.map(function (g) {
       return '<button class="btn btn--primary" data-game="' + g + '">' + t(labels[g]) + '</button>';
     }).join('');
@@ -3232,11 +3663,13 @@ body[data-theme="candy"] .candy {
       '<div class="study-list" id="study-list">' + rows + '</div>' +
       '<div class="row mt">' +
         '<button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button>' +
-        '<button class="btn btn--ghost" id="study-print">' + t('print_table') + '</button>' +
+        '<button class="btn btn--secondary" id="study-melody">' + t('melody') + '</button>' +
       '</div>' +
+      '<div class="row mt"><button class="btn btn--ghost" id="study-print">' + t('print_table') + '</button></div>' +
       '</div>';
     wireTopbar();
     el('study-print').addEventListener('click', function () { printView('table', table); });
+    el('study-melody').addEventListener('click', function () { MK.audio.resume(); MK.audio.stopSpeech(); MK.audio.playMelody(); });
 
     // Phrases à prononcer (intro + lignes ×1..×10) — index aligné avec data-i (ligne k = i=k)
     const lines = [t('table_of') + ' ' + table];
@@ -3273,7 +3706,7 @@ body[data-theme="candy"] .candy {
     const table = parseInt(params.table, 10) || 2;
     const level = parseInt(params.level, 10) || MK.engine.levelOfTable(table);
     const gameKey = params.game || 'flashcard';
-    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak', review: 'Review' };
+    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak', review: 'Review', inverse: 'Inverse' };
     const Cls = MK.games[map[gameKey]];
 
     app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) + '<div id="game-host"></div>';
@@ -3408,7 +3841,16 @@ body[data-theme="candy"] .candy {
 
       '<h3>' + t('theme') + '</h3>' +
       '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + themeChip('candy', 'theme_candy') + '</div>' +
-      '<div class="mt-lg"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
+
+      '<h3>' + t('reading_help') + '</h3>' +
+      '<div class="choice-row">' +
+        '<button class="chip ' + (getPref('dys') === '1' ? 'active' : '') + '" id="set-dys">' + t('dyslexia') + '</button>' +
+        '<button class="chip ' + (getPref('contrast') === '1' ? 'active' : '') + '" id="set-contrast">' + t('contrast') + '</button>' +
+      '</div>' +
+      '<div class="choice-row"><button class="chip ' + (getPref('reminder') === '1' ? 'active' : '') + '" id="set-reminder">' + t('reminder') + '</button></div>' +
+
+      '<div class="mt-lg"><button class="btn btn--secondary" id="set-parent">' + t('parent_space') + '</button></div>' +
+      '<div class="mt"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
       '<div class="mt"><button class="btn btn--ghost" id="set-reset" style="color:var(--color-error);border-color:var(--color-error)">🗑️ ' + t('reset') + '</button></div>' +
       '</div>';
 
@@ -3431,6 +3873,20 @@ body[data-theme="candy"] .candy {
     app.querySelectorAll('[data-theme]').forEach(function (b) {
       b.addEventListener('click', function () { setTheme(b.dataset.theme); screenSettings(); });
     });
+    // Aide à la lecture
+    el('set-dys').addEventListener('click', function () { setPref('dys', getPref('dys') === '1' ? '0' : '1'); applyA11y(); screenSettings(); });
+    el('set-contrast').addEventListener('click', function () { setPref('contrast', getPref('contrast') === '1' ? '0' : '1'); applyA11y(); screenSettings(); });
+    // Rappel quotidien
+    el('set-reminder').addEventListener('click', function () {
+      if (getPref('reminder') === '1') { setPref('reminder', '0'); screenSettings(); return; }
+      const enable = function () { setPref('reminder', '1'); MK.visual.toast('🔔'); screenSettings(); };
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        try { Notification.requestPermission().then(function (p) { if (p === 'granted') enable(); else { setPref('reminder', '1'); screenSettings(); } }); }
+        catch (e) { enable(); }
+      } else { enable(); }
+    });
+    // Espace parent
+    el('set-parent').addEventListener('click', function () { openParent(); });
     // Voix
     el('set-voice').addEventListener('change', function () { MK.audio.setPreferredVoice(this.value || null); });
     el('set-test').addEventListener('click', function () {
@@ -3457,6 +3913,102 @@ body[data-theme="candy"] .candy {
     });
   }
 
+  // Défi du jour & Duel : écrans dédiés (jeux sans table)
+  function screenChallenge() {
+    app.innerHTML = topbar({ back: true, title: t('challenge') }) + '<div id="game-host"></div>';
+    wireTopbar();
+    MK.progress.touchStreak();
+    const host = el('game-host');
+    gameInstance = new MK.games.Challenge(host, { onFinish: function () { gameInstance = null; } });
+    gameInstance.start();
+  }
+  function screenDuel() {
+    app.innerHTML = topbar({ back: true, title: t('duel') }) + '<div id="game-host"></div>';
+    wireTopbar();
+    const host = el('game-host');
+    gameInstance = new MK.games.Duel(host, { onFinish: function () { gameInstance = null; } });
+    gameInstance.start();
+  }
+
+  // Boutique : dépenser des pièces (=XP) pour débloquer des autocollants
+  const SHOP_ITEMS = [
+    { id: 's_rainbow', e: '🌈', p: 50 }, { id: 's_rocket', e: '🚀', p: 60 },
+    { id: 's_pizza', e: '🍕', p: 70 }, { id: 's_ball', e: '⚽', p: 80 },
+    { id: 's_dino', e: '🦖', p: 100 }, { id: 's_guitar', e: '🎸', p: 120 },
+    { id: 's_crown', e: '👑', p: 150 }, { id: 's_dragon', e: '🐉', p: 200 },
+  ];
+  function screenShop() {
+    const items = SHOP_ITEMS.map(function (it) {
+      const owned = MK.progress.owns(it.id);
+      return '<button class="shop-item ' + (owned ? 'owned' : '') + '" data-id="' + it.id + '" data-p="' + it.p + '">' +
+        '<span class="shop-e">' + it.e + '</span>' +
+        '<span class="shop-p">' + (owned ? '✅' : '🪙 ' + it.p) + '</span></button>';
+    }).join('');
+    app.innerHTML = topbar({ back: true, title: t('shop') }) +
+      '<div class="screen-enter">' +
+      '<p class="screen-sub center">🪙 ' + MK.progress.coins() + ' ' + t('coins') + '</p>' +
+      '<div class="shop-grid">' + items + '</div>' +
+      '</div>';
+    wireTopbar();
+    app.querySelectorAll('.shop-item').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (MK.progress.owns(b.dataset.id)) return;
+        const okBuy = MK.progress.buy(b.dataset.id, parseInt(b.dataset.p, 10));
+        if (okBuy) { MK.audio.playFanfare(); MK.visual.confetti(); MK.visual.toast(t('shop_bought')); }
+        else { MK.visual.toast(t('shop_locked')); }
+        screenShop();
+      });
+    });
+  }
+
+  // Espace parent (code PIN) → bilan
+  function openParent() {
+    const saved = getPref('pin');
+    showPin(saved ? t('enter_pin') : t('set_pin'), function (code) {
+      if (!code || code.length < 4) return;
+      if (!saved) { setPref('pin', code); screenParent(); return; }
+      if (code === saved) screenParent();
+      else MK.visual.toast(t('wrong_pin'));
+    });
+  }
+  function showPin(label, cb) {
+    const ov = document.createElement('div'); ov.className = 'modal-overlay';
+    ov.innerHTML = '<div class="modal"><p>' + label + '</p>' +
+      '<input id="pin-in" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]*" ' +
+      'style="width:140px;text-align:center;font-size:1.8rem;letter-spacing:8px;min-height:52px;border-radius:12px;border:none;background:var(--color-surface-2);color:#fff">' +
+      '<div class="row mt"><button class="btn btn--primary" data-ok>✔️</button><button class="btn btn--ghost" data-no>✖️</button></div></div>';
+    document.body.appendChild(ov);
+    const inp = ov.querySelector('#pin-in'); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
+    const close = function (v) { ov.remove(); cb(v); };
+    ov.querySelector('[data-ok]').addEventListener('click', function () { close(inp.value.replace(/\D/g, '')); });
+    ov.querySelector('[data-no]').addEventListener('click', function () { close(null); });
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(null); });
+  }
+  function screenParent() {
+    const p = MK.progress.get();
+    const sec = MK.progress.getPlaySec();
+    const mn = Math.floor(sec / 60), hh = Math.floor(mn / 60);
+    const timeStr = hh > 0 ? (hh + ' h ' + (mn % 60) + ' min') : (mn + ' min');
+    const weak = MK.progress.weakestFacts(null, 8).filter(function (f) { return f.weakness > 0; });
+    const weakHtml = weak.length
+      ? weak.map(function (f) { return '<span class="chip">' + f.a + '×' + f.b + '</span>'; }).join('')
+      : '<p class="screen-sub">' + t('none_weak') + '</p>';
+    app.innerHTML = topbar({ back: true, noSettings: true, title: t('parent_space') }) +
+      '<div class="screen-enter card">' +
+      '<div class="center" style="font-size:2rem">' + MK.progress.getActive() + '</div>' +
+      '<div class="stat-row">' +
+        '<div class="stat"><div class="num">' + p.xp + '</div><div class="lbl">XP</div></div>' +
+        '<div class="stat"><div class="num">' + MK.progress.masteredCount() + '</div><div class="lbl">' + t('tables_mastered') + '</div></div>' +
+        '<div class="stat"><div class="num">' + timeStr + '</div><div class="lbl">' + t('playtime') + '</div></div>' +
+      '</div>' +
+      '<h3>' + t('weak_facts') + '</h3>' +
+      '<div class="choice-row">' + weakHtml + '</div>' +
+      '<div class="mt-lg"><button class="btn btn--accent" id="par-print">' + t('report_print') + '</button></div>' +
+      '</div>';
+    wireTopbar();
+    el('par-print').addEventListener('click', function () { printView('report'); });
+  }
+
   // ---------- Router ----------
   function render() {
     if (gameInstance && gameInstance.stop) { gameInstance.stop(); gameInstance = null; }
@@ -3470,6 +4022,9 @@ body[data-theme="candy"] .candy {
       case 'play': screenPlay(params); break;
       case 'progress': screenProgress(); break;
       case 'settings': screenSettings(); break;
+      case 'challenge': screenChallenge(); break;
+      case 'duel': screenDuel(); break;
+      case 'shop': screenShop(); break;
       default: screenHome();
     }
   }
@@ -3482,6 +4037,15 @@ body[data-theme="candy"] .candy {
     let savedTheme = 'space';
     try { savedTheme = localStorage.getItem(THEME_KEY) || 'space'; } catch (e) {}
     setTheme(savedTheme);
+    applyA11y();           // police lisible / fort contraste (préférences appareil)
+    maybeReminder();        // rappel quotidien (si activé et nouveau jour)
+
+    // Comptage du temps de jeu (espace parent) : +10 s tant qu'on joue/apprend
+    setInterval(function () {
+      if (document.visibilityState !== 'visible') return;
+      const r = (location.hash || '').replace(/^#/, '').split('?')[0];
+      if (r === 'play' || r === 'study' || r === 'challenge' || r === 'duel') MK.progress.addPlaySec(10);
+    }, 10000);
 
     // re-render au changement de langue
     MK.i18n.onChange(function () { render(); });

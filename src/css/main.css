@@ -433,6 +433,35 @@ img, svg { display: block; max-width: 100%; }
   .print-table .pr-row { text-align: center; font-size: 1.7rem; padding: 8px 0; border-bottom: 1px dashed #ccc; }
 }
 
+/* ---------- Boutique 🪙 ---------- */
+.shop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+.shop-item {
+  aspect-ratio: 1; border-radius: 14px; background: var(--color-surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  box-shadow: var(--shadow-soft); color: var(--color-text);
+}
+.shop-item .shop-e { font-size: 2rem; }
+.shop-item .shop-p { font-size: .8rem; color: var(--color-text-dim); }
+.shop-item.owned { background: var(--color-success); color: #03261c; }
+.shop-item.owned .shop-p { color: #03261c; }
+@media (min-width: 600px) { .shop-grid { grid-template-columns: repeat(6, 1fr); } }
+
+/* ---------- Duel ⚔️ ---------- */
+.duel-turn { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px; }
+.duel-p1 .duel-turn { color: #4ea8ff; }
+.duel-p2 .duel-turn { color: #ff6b6b; }
+.duel-s1 { color: #4ea8ff; font-weight: 800; }
+.duel-s2 { color: #ff6b6b; font-weight: 800; }
+
+/* ---------- Accessibilité : lecture facile + fort contraste ---------- */
+body.a11y-dys, body.a11y-dys * { font-family: 'Nunito', Verdana, Tahoma, sans-serif !important; letter-spacing: .03em; }
+body.a11y-dys { line-height: 1.7; word-spacing: .08em; }
+body.a11y-contrast {
+  --color-bg: #000; --color-surface: #141414; --color-surface-2: #262626;
+  --color-text: #ffffff; --color-text-dim: #e0e0e0;
+}
+body.a11y-contrast .btn, body.a11y-contrast .answer-btn, body.a11y-contrast .table-tile { outline: 2px solid #ffffff; }
+
 /* ---------- Jeu ORAL (micro) ---------- */
 .mic-btn {
   width: 110px; height: 110px; border-radius: 50%;

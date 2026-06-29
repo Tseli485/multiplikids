@@ -14,6 +14,29 @@
   // ---------- Helpers ----------
   function el(id) { return document.getElementById(id); }
 
+  // Préférences globales (appareil, pas par profil) : lecture, rappel, code parent
+  function getPref(k) { try { return localStorage.getItem('multiplikids_' + k); } catch (e) { return null; } }
+  function setPref(k, v) { try { v == null ? localStorage.removeItem('multiplikids_' + k) : localStorage.setItem('multiplikids_' + k, v); } catch (e) {} }
+  function applyA11y() {
+    document.body.classList.toggle('a11y-dys', getPref('dys') === '1');
+    document.body.classList.toggle('a11y-contrast', getPref('contrast') === '1');
+  }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // Rappel quotidien : notification à l'ouverture si activé et nouveau jour
+  function maybeReminder() {
+    try {
+      if (getPref('reminder') !== '1' || !('Notification' in window)) return;
+      if (getPref('reminded') === todayKey()) return;
+      if (Notification.permission === 'granted') {
+        new Notification(t('reminder_title'), { body: t('reminder_body') });
+        setPref('reminded', todayKey());
+      }
+    } catch (e) {}
+  }
+
   // Wake Lock : empêche l'écran de se verrouiller/éteindre pendant l'usage.
   // (nécessite https — actif sur GitHub Pages ; ignoré silencieusement sinon)
   let wakeLock = null;
@@ -96,6 +119,16 @@
         '<p class="dip-text">' + t('diploma_text') + '</p>' +
         '<p class="dip-meta">⭐ ' + p.xp + ' XP · ' + MK.progress.masteredCount() + ' ' + t('tables_mastered') + '</p>' +
         '<p class="dip-sign">MultipliKids</p></div>';
+    } else if (kind === 'report') {
+      const p = MK.progress.get(); const sec = MK.progress.getPlaySec();
+      const mn = Math.floor(sec / 60);
+      const weak = MK.progress.weakestFacts(null, 10).filter(function (f) { return f.weakness > 0; })
+        .map(function (f) { return f.a + ' × ' + f.b; }).join(' · ') || t('none_weak');
+      host.innerHTML = '<div class="print-table"><h1>' + t('parent_space') + ' — ' + MK.progress.getActive() + '</h1>' +
+        '<div class="pr-row">XP : <b>' + p.xp + '</b></div>' +
+        '<div class="pr-row">' + t('tables_mastered') + ' : <b>' + MK.progress.masteredCount() + '</b></div>' +
+        '<div class="pr-row">' + t('playtime') + ' : <b>' + mn + ' min</b></div>' +
+        '<div class="pr-row">' + t('weak_facts') + ' : ' + weak + '</div></div>';
     } else {
       let rows = '';
       for (let i = 1; i <= 10; i++) rows += '<div class="pr-row">' + table + ' × ' + i + ' = <b>' + (table * i) + '</b></div>';
@@ -236,6 +269,13 @@
         '<button class="btn btn--secondary" id="go-progress">' + MK.progress.getActive() + ' ' + t('btn_progress') + ' (🔥 ' + p.streak + ')</button>' +
         '<button class="btn btn--ghost" id="go-settings">⚙️ ' + t('btn_settings') + '</button>' +
       '</div>' +
+      '<div class="row" style="margin-bottom:8px">' +
+        '<button class="btn btn--accent" id="go-challenge">🏆 ' + t('challenge') + (MK.progress.challengeDoneToday() ? ' ✅' : '') + '</button>' +
+        '<button class="btn btn--primary" id="go-duel">' + t('duel_2p') + '</button>' +
+      '</div>' +
+      '<div class="row" style="margin-bottom:8px">' +
+        '<button class="btn btn--ghost" id="go-shop">' + t('shop') + ' (🪙 ' + MK.progress.coins() + ')</button>' +
+      '</div>' +
       '<h3 class="mt">' + t('choose_table') + '</h3>' +
       '<div class="table-grid">' + tilesHtml + '</div>' +
       '</div>';
@@ -243,6 +283,9 @@
     wireTopbar();
     el('go-progress').addEventListener('click', function () { navigate('progress'); });
     el('go-settings').addEventListener('click', function () { navigate('settings'); });
+    el('go-challenge').addEventListener('click', function () { MK.audio.resume(); navigate('challenge'); });
+    el('go-duel').addEventListener('click', function () { MK.audio.resume(); navigate('duel'); });
+    el('go-shop').addEventListener('click', function () { navigate('shop'); });
     app.querySelectorAll('.table-tile:not(.locked)').forEach(function (tile) {
       tile.addEventListener('click', function () {
         MK.audio.resume();
@@ -256,14 +299,14 @@
     const level = MK.engine.levelOfTable(table);
     const playerLevel = MK.progress.get().level;
     // Mode libre → tous les jeux ; sinon jeux du niveau de la table débloqués par le joueur
-    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak', 'review'];
+    const ALL_GAMES = ['flashcard', 'quiz', 'memory', 'rocket', 'rhythm', 'speak', 'review', 'inverse'];
     const games = MK.progress.getFreeMode()
       ? ALL_GAMES
       : MK.engine.gamesForLevel(level).filter(function (g) {
           return MK.engine.gamesForLevel(playerLevel).indexOf(g) !== -1;
         });
 
-    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak', review: 'game_review' };
+    const labels = { flashcard: 'game_flashcard', quiz: 'game_quiz', memory: 'game_memory', rocket: 'game_rocket', rhythm: 'game_rhythm', speak: 'game_speak', review: 'game_review', inverse: 'game_inverse' };
     const list = games.map(function (g) {
       return '<button class="btn btn--primary" data-game="' + g + '">' + t(labels[g]) + '</button>';
     }).join('');
@@ -310,11 +353,13 @@
       '<div class="study-list" id="study-list">' + rows + '</div>' +
       '<div class="row mt">' +
         '<button class="btn btn--primary" id="study-play">▶️ ' + t('btn_replay') + '</button>' +
-        '<button class="btn btn--ghost" id="study-print">' + t('print_table') + '</button>' +
+        '<button class="btn btn--secondary" id="study-melody">' + t('melody') + '</button>' +
       '</div>' +
+      '<div class="row mt"><button class="btn btn--ghost" id="study-print">' + t('print_table') + '</button></div>' +
       '</div>';
     wireTopbar();
     el('study-print').addEventListener('click', function () { printView('table', table); });
+    el('study-melody').addEventListener('click', function () { MK.audio.resume(); MK.audio.stopSpeech(); MK.audio.playMelody(); });
 
     // Phrases à prononcer (intro + lignes ×1..×10) — index aligné avec data-i (ligne k = i=k)
     const lines = [t('table_of') + ' ' + table];
@@ -351,7 +396,7 @@
     const table = parseInt(params.table, 10) || 2;
     const level = parseInt(params.level, 10) || MK.engine.levelOfTable(table);
     const gameKey = params.game || 'flashcard';
-    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak', review: 'Review' };
+    const map = { flashcard: 'Flashcard', quiz: 'Quiz', memory: 'Memory', rocket: 'Rocket', rhythm: 'Rhythm', speak: 'Speak', review: 'Review', inverse: 'Inverse' };
     const Cls = MK.games[map[gameKey]];
 
     app.innerHTML = topbar({ back: true, title: t('table_of') + ' ' + table }) + '<div id="game-host"></div>';
@@ -486,7 +531,16 @@
 
       '<h3>' + t('theme') + '</h3>' +
       '<div class="choice-row">' + themeChip('space', 'theme_space') + themeChip('ocean', 'theme_ocean') + themeChip('jungle', 'theme_jungle') + themeChip('candy', 'theme_candy') + '</div>' +
-      '<div class="mt-lg"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
+
+      '<h3>' + t('reading_help') + '</h3>' +
+      '<div class="choice-row">' +
+        '<button class="chip ' + (getPref('dys') === '1' ? 'active' : '') + '" id="set-dys">' + t('dyslexia') + '</button>' +
+        '<button class="chip ' + (getPref('contrast') === '1' ? 'active' : '') + '" id="set-contrast">' + t('contrast') + '</button>' +
+      '</div>' +
+      '<div class="choice-row"><button class="chip ' + (getPref('reminder') === '1' ? 'active' : '') + '" id="set-reminder">' + t('reminder') + '</button></div>' +
+
+      '<div class="mt-lg"><button class="btn btn--secondary" id="set-parent">' + t('parent_space') + '</button></div>' +
+      '<div class="mt"><button class="btn btn--secondary" id="set-share">📤 ' + t('share') + '</button></div>' +
       '<div class="mt"><button class="btn btn--ghost" id="set-reset" style="color:var(--color-error);border-color:var(--color-error)">🗑️ ' + t('reset') + '</button></div>' +
       '</div>';
 
@@ -509,6 +563,20 @@
     app.querySelectorAll('[data-theme]').forEach(function (b) {
       b.addEventListener('click', function () { setTheme(b.dataset.theme); screenSettings(); });
     });
+    // Aide à la lecture
+    el('set-dys').addEventListener('click', function () { setPref('dys', getPref('dys') === '1' ? '0' : '1'); applyA11y(); screenSettings(); });
+    el('set-contrast').addEventListener('click', function () { setPref('contrast', getPref('contrast') === '1' ? '0' : '1'); applyA11y(); screenSettings(); });
+    // Rappel quotidien
+    el('set-reminder').addEventListener('click', function () {
+      if (getPref('reminder') === '1') { setPref('reminder', '0'); screenSettings(); return; }
+      const enable = function () { setPref('reminder', '1'); MK.visual.toast('🔔'); screenSettings(); };
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        try { Notification.requestPermission().then(function (p) { if (p === 'granted') enable(); else { setPref('reminder', '1'); screenSettings(); } }); }
+        catch (e) { enable(); }
+      } else { enable(); }
+    });
+    // Espace parent
+    el('set-parent').addEventListener('click', function () { openParent(); });
     // Voix
     el('set-voice').addEventListener('change', function () { MK.audio.setPreferredVoice(this.value || null); });
     el('set-test').addEventListener('click', function () {
@@ -535,6 +603,102 @@
     });
   }
 
+  // Défi du jour & Duel : écrans dédiés (jeux sans table)
+  function screenChallenge() {
+    app.innerHTML = topbar({ back: true, title: t('challenge') }) + '<div id="game-host"></div>';
+    wireTopbar();
+    MK.progress.touchStreak();
+    const host = el('game-host');
+    gameInstance = new MK.games.Challenge(host, { onFinish: function () { gameInstance = null; } });
+    gameInstance.start();
+  }
+  function screenDuel() {
+    app.innerHTML = topbar({ back: true, title: t('duel') }) + '<div id="game-host"></div>';
+    wireTopbar();
+    const host = el('game-host');
+    gameInstance = new MK.games.Duel(host, { onFinish: function () { gameInstance = null; } });
+    gameInstance.start();
+  }
+
+  // Boutique : dépenser des pièces (=XP) pour débloquer des autocollants
+  const SHOP_ITEMS = [
+    { id: 's_rainbow', e: '🌈', p: 50 }, { id: 's_rocket', e: '🚀', p: 60 },
+    { id: 's_pizza', e: '🍕', p: 70 }, { id: 's_ball', e: '⚽', p: 80 },
+    { id: 's_dino', e: '🦖', p: 100 }, { id: 's_guitar', e: '🎸', p: 120 },
+    { id: 's_crown', e: '👑', p: 150 }, { id: 's_dragon', e: '🐉', p: 200 },
+  ];
+  function screenShop() {
+    const items = SHOP_ITEMS.map(function (it) {
+      const owned = MK.progress.owns(it.id);
+      return '<button class="shop-item ' + (owned ? 'owned' : '') + '" data-id="' + it.id + '" data-p="' + it.p + '">' +
+        '<span class="shop-e">' + it.e + '</span>' +
+        '<span class="shop-p">' + (owned ? '✅' : '🪙 ' + it.p) + '</span></button>';
+    }).join('');
+    app.innerHTML = topbar({ back: true, title: t('shop') }) +
+      '<div class="screen-enter">' +
+      '<p class="screen-sub center">🪙 ' + MK.progress.coins() + ' ' + t('coins') + '</p>' +
+      '<div class="shop-grid">' + items + '</div>' +
+      '</div>';
+    wireTopbar();
+    app.querySelectorAll('.shop-item').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (MK.progress.owns(b.dataset.id)) return;
+        const okBuy = MK.progress.buy(b.dataset.id, parseInt(b.dataset.p, 10));
+        if (okBuy) { MK.audio.playFanfare(); MK.visual.confetti(); MK.visual.toast(t('shop_bought')); }
+        else { MK.visual.toast(t('shop_locked')); }
+        screenShop();
+      });
+    });
+  }
+
+  // Espace parent (code PIN) → bilan
+  function openParent() {
+    const saved = getPref('pin');
+    showPin(saved ? t('enter_pin') : t('set_pin'), function (code) {
+      if (!code || code.length < 4) return;
+      if (!saved) { setPref('pin', code); screenParent(); return; }
+      if (code === saved) screenParent();
+      else MK.visual.toast(t('wrong_pin'));
+    });
+  }
+  function showPin(label, cb) {
+    const ov = document.createElement('div'); ov.className = 'modal-overlay';
+    ov.innerHTML = '<div class="modal"><p>' + label + '</p>' +
+      '<input id="pin-in" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]*" ' +
+      'style="width:140px;text-align:center;font-size:1.8rem;letter-spacing:8px;min-height:52px;border-radius:12px;border:none;background:var(--color-surface-2);color:#fff">' +
+      '<div class="row mt"><button class="btn btn--primary" data-ok>✔️</button><button class="btn btn--ghost" data-no>✖️</button></div></div>';
+    document.body.appendChild(ov);
+    const inp = ov.querySelector('#pin-in'); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
+    const close = function (v) { ov.remove(); cb(v); };
+    ov.querySelector('[data-ok]').addEventListener('click', function () { close(inp.value.replace(/\D/g, '')); });
+    ov.querySelector('[data-no]').addEventListener('click', function () { close(null); });
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(null); });
+  }
+  function screenParent() {
+    const p = MK.progress.get();
+    const sec = MK.progress.getPlaySec();
+    const mn = Math.floor(sec / 60), hh = Math.floor(mn / 60);
+    const timeStr = hh > 0 ? (hh + ' h ' + (mn % 60) + ' min') : (mn + ' min');
+    const weak = MK.progress.weakestFacts(null, 8).filter(function (f) { return f.weakness > 0; });
+    const weakHtml = weak.length
+      ? weak.map(function (f) { return '<span class="chip">' + f.a + '×' + f.b + '</span>'; }).join('')
+      : '<p class="screen-sub">' + t('none_weak') + '</p>';
+    app.innerHTML = topbar({ back: true, noSettings: true, title: t('parent_space') }) +
+      '<div class="screen-enter card">' +
+      '<div class="center" style="font-size:2rem">' + MK.progress.getActive() + '</div>' +
+      '<div class="stat-row">' +
+        '<div class="stat"><div class="num">' + p.xp + '</div><div class="lbl">XP</div></div>' +
+        '<div class="stat"><div class="num">' + MK.progress.masteredCount() + '</div><div class="lbl">' + t('tables_mastered') + '</div></div>' +
+        '<div class="stat"><div class="num">' + timeStr + '</div><div class="lbl">' + t('playtime') + '</div></div>' +
+      '</div>' +
+      '<h3>' + t('weak_facts') + '</h3>' +
+      '<div class="choice-row">' + weakHtml + '</div>' +
+      '<div class="mt-lg"><button class="btn btn--accent" id="par-print">' + t('report_print') + '</button></div>' +
+      '</div>';
+    wireTopbar();
+    el('par-print').addEventListener('click', function () { printView('report'); });
+  }
+
   // ---------- Router ----------
   function render() {
     if (gameInstance && gameInstance.stop) { gameInstance.stop(); gameInstance = null; }
@@ -548,6 +712,9 @@
       case 'play': screenPlay(params); break;
       case 'progress': screenProgress(); break;
       case 'settings': screenSettings(); break;
+      case 'challenge': screenChallenge(); break;
+      case 'duel': screenDuel(); break;
+      case 'shop': screenShop(); break;
       default: screenHome();
     }
   }
@@ -560,6 +727,15 @@
     let savedTheme = 'space';
     try { savedTheme = localStorage.getItem(THEME_KEY) || 'space'; } catch (e) {}
     setTheme(savedTheme);
+    applyA11y();           // police lisible / fort contraste (préférences appareil)
+    maybeReminder();        // rappel quotidien (si activé et nouveau jour)
+
+    // Comptage du temps de jeu (espace parent) : +10 s tant qu'on joue/apprend
+    setInterval(function () {
+      if (document.visibilityState !== 'visible') return;
+      const r = (location.hash || '').replace(/^#/, '').split('?')[0];
+      if (r === 'play' || r === 'study' || r === 'challenge' || r === 'duel') MK.progress.addPlaySec(10);
+    }, 10000);
 
     // re-render au changement de langue
     MK.i18n.onChange(function () { render(); });

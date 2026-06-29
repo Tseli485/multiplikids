@@ -36,6 +36,10 @@
       badges: [], streak: 0, lastPlayDay: null,
       lang: (MK.i18n ? MK.i18n.getLang() : 'el'),
       freeMode: true,
+      playSec: 0,            // temps de jeu cumulé (espace parent)
+      owned: [],             // articles débloqués (boutique)
+      spent: 0,              // XP dépensées (boutique)
+      lastChallengeDay: null,// défi du jour
     };
   }
 
@@ -226,6 +230,27 @@
   function tablePercent(table) { const T = state.tables[String(table)]; return T ? T.avgScore : 0; }
   function masteredCount() { return Object.keys(state.tables).filter(function (k) { return state.tables[k].mastered; }).length; }
 
+  // ---------- Temps de jeu (espace parent) ----------
+  function addPlaySec(n) { state.playSec = (state.playSec || 0) + Math.max(0, n | 0); save(); }
+  function getPlaySec() { return state.playSec || 0; }
+
+  // ---------- Défi du jour ----------
+  function challengeDoneToday() { return state.lastChallengeDay === todayStr(); }
+  function markChallengeDone() { state.lastChallengeDay = todayStr(); save(); }
+
+  // ---------- Boutique (dépenser des XP, sans perdre le score total affiché) ----------
+  function coins() { return Math.max(0, (state.xp || 0) - (state.spent || 0)); }
+  function owns(id) { return (state.owned || []).indexOf(id) !== -1; }
+  function buy(id, price) {
+    if (owns(id)) return true;
+    if (coins() < price) return false;
+    state.owned = (state.owned || []).concat(id);
+    state.spent = (state.spent || 0) + price;
+    save();
+    return true;
+  }
+  function ownedList() { return (state.owned || []).slice(); }
+
   function reset() { state = defaultState(); save(); }
 
   window.MK.progress = {
@@ -241,6 +266,9 @@
     getFreeMode: getFreeMode, setFreeMode: setFreeMode,
     starsForTable: starsForTable, tablePercent: tablePercent,
     masteredCount: masteredCount,
+    addPlaySec: addPlaySec, getPlaySec: getPlaySec,
+    challengeDoneToday: challengeDoneToday, markChallengeDone: markChallengeDone,
+    coins: coins, owns: owns, buy: buy, ownedList: ownedList,
     reset: reset,
   };
 })();

@@ -127,6 +127,14 @@
   }
   function playTick() { tone(880, 0, 0.06, 'square', 0.08); }
 
+  // Comptine de la table : une note (gamme pentatonique) par multiple ×1..×10.
+  // Aide la mémorisation auditive (motif mélodique propre à chaque table).
+  function playMelody() {
+    const penta = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+    for (let i = 0; i < 10; i++) tone(penta[i], i * 0.34, 0.30, 'triangle', 0.18);
+    tone(1046.5, 10 * 0.34, 0.5, 'sine', 0.16); // note finale
+  }
+
   /* ---------- Prononciation (Web Speech API) ---------- */
   // Énonce un texte clairement dans la langue donnée.
   // La voix est choisie AU MOMENT de parler (après chargement des voix) → la
@@ -280,7 +288,7 @@
   function primeVoices() { whenVoicesReady(function () {}); }
 
   window.MK.audio = {
-    playCorrect: playCorrect, playWrong: playWrong, playFanfare: playFanfare, playTick: playTick,
+    playCorrect: playCorrect, playWrong: playWrong, playFanfare: playFanfare, playTick: playTick, playMelody: playMelody,
     speak: speak, speakOperation: speakOperation, cancel: cancel,
     narrate: narrate, stopSpeech: stopSpeech,
     setEnabled: setEnabled, isEnabled: isEnabled, resume: ensureCtx,
