@@ -36,7 +36,8 @@
       this.b = b; this.product = a * b;
       this.options = distractFactor(b);
       this.render();
-      MK.audio.speakOperation(a, b, this.product); // énonce le calcul complet (indice)
+      // on énonce SEULEMENT le produit (jamais le facteur à trouver)
+      MK.audio.speak(String(this.product), (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR');
     }
 
     render() {
@@ -61,22 +62,27 @@
 
     choose(value, btn) {
       if (this.locked) return;
-      this.locked = true;
       const ok = value === this.b;
-      MK.progress.recordFact(this.table, this.b, ok);
       const fb = this.host.querySelector('#iv-fb');
       if (ok) {
+        // BONNE réponse → on passe à la suivante
+        this.locked = true;
+        MK.progress.recordFact(this.table, this.b, true);
         btn.classList.add('correct'); this.correct++; MK.progress.addXP(10);
         if (fb) { fb.textContent = t('correct'); fb.className = 'feedback ok celebrate'; }
         MK.audio.playCorrect();
+        this.qIndex++;
+        setTimeout(() => this.next(), 1100);
       } else {
+        // MAUVAISE réponse → on NE révèle PAS, l'enfant réessaie sur la même question
+        this.locked = true; // petit verrou anti double-clic
+        MK.progress.recordFact(this.table, this.b, false);
         btn.classList.add('wrong');
-        this.host.querySelectorAll('.answer-btn').forEach((b) => { if (parseInt(b.dataset.v, 10) === this.b) b.classList.add('correct'); });
         if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
         MK.audio.playWrong();
+        const self = this;
+        setTimeout(function () { btn.classList.remove('wrong'); self.locked = false; }, 800);
       }
-      this.qIndex++;
-      setTimeout(() => this.next(), 1200);
     }
 
     finish() {
