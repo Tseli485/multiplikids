@@ -38,8 +38,18 @@
 
     start() {
       this.i = 1; this.correct = 0; this.netErr = 0; this.active = true;
+      this.everHeard = false; this.silentStreak = 0; this.audioCapErr = 0;
       if (!MK.audio.canRecognize()) { this.renderUnsupported(); return; }
       this.next();
+      // Vérif proactive de la permission micro (si le navigateur l'expose) : évite
+      // à l'enfant d'attendre en silence si le micro est déjà bloqué au départ.
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          navigator.permissions.query({ name: 'microphone' }).then((st) => {
+            if (st.state === 'denied' && this.active) this.hardStop('not-allowed');
+          }).catch(() => {});
+        }
+      } catch (e) {}
     }
 
     renderUnsupported() {
@@ -129,6 +139,8 @@
       if (!this.active || this.speaking) return;   // ignore tant que l'app parle
       const said = (alts && alts[0]) ? alts[0] : '';
       if (!said) return;
+      // le micro capte bel et bien du son → annule tout diagnostic « rien ne marche »
+      this.everHeard = true; this.silentStreak = 0; this.audioCapErr = 0;
       const heard = this.host.querySelector('#sp-heard');
       const fb = this.host.querySelector('#sp-fb');
       if (heard) heard.textContent = '« ' + said + ' »';
@@ -197,7 +209,22 @@
 
     onErr(err) {
       this.setMic(false);
-      if (err === 'no-speech' || err === 'aborted' || err === 'audio-capture') {
+      // « audio-capture » = le navigateur n'arrive PAS DU TOUT à lire le micro
+      // (permission bloquée au niveau OS, aucun périphérique, micro pris par une
+      // autre appli...). C'est un vrai problème persistant, PAS un simple silence :
+      // on ne doit JAMAIS le cacher indéfiniment, sinon rien ne s'affiche jamais.
+      if (err === 'audio-capture') {
+        this.audioCapErr = (this.audioCapErr || 0) + 1;
+        if (this.audioCapErr >= 3) { this.hardStop(err); return; }
+        return; // 1-2 fois : peut être transitoire, on retente encore
+      }
+      if (err === 'no-speech' || err === 'aborted') {
+        this.audioCapErr = 0;
+        // Silence prolongé anormal : si après beaucoup de tentatives on n'a JAMAIS
+        // entendu le moindre son, c'est probablement un vrai souci micro (pas de
+        // la patience) → on le signale au lieu de rester silencieux pour toujours.
+        this.silentStreak = (this.silentStreak || 0) + 1;
+        if (!this.everHeard && this.silentStreak >= 12) { this.hardStop('audio-capture'); return; }
         return; // PATIENT : aucun reproche, onEnd rouvrira le micro
       }
       if (err === 'network') {
