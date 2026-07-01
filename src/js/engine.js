@@ -185,17 +185,62 @@
       if (r === 1) return [FR_TENS[t] + ' et un', FR_TENS[t] + ' un'];
       return [FR_TENS[t] + ' ' + FR_UNITS[r][0]];
     }
-    if (n < 80) { // 70–79 : soixante + 10..19
+    if (n < 80) { // 70–79 : France "soixante-dix..." ET Belgique/Suisse "septante..."
       const forms = FR_TEENS[n - 60].map(function (x) { return 'soixante ' + x; });
       if (n === 71) forms.push('soixante et onze');
+      const r = n - 70;
+      if (r === 0) forms.push('septante');
+      else if (r === 1) { forms.push('septante et un'); forms.push('septante un'); }
+      else forms.push('septante ' + FR_UNITS[r][0]);
       return forms;
     }
-    if (n === 80) return ['quatre vingts', 'quatre vingt'];
-    if (n < 90) return ['quatre vingt ' + FR_UNITS[n - 80][0]]; // 81..89
-    return FR_TEENS[n - 80].map(function (x) { return 'quatre vingt ' + x; }); // 90..99
+    if (n === 80) return ['quatre vingts', 'quatre vingt', 'octante', 'huitante'];
+    if (n < 90) return ['quatre vingt ' + FR_UNITS[n - 80][0], (n === 81 ? 'octante et un' : 'octante ' + FR_UNITS[n - 80][0])]; // 81..89 + Belgique
+    { // 90–99 : France "quatre-vingt-dix..." ET Belgique/Suisse "nonante..."
+      const forms = FR_TEENS[n - 80].map(function (x) { return 'quatre vingt ' + x; });
+      const r = n - 90;
+      if (r === 0) forms.push('nonante');
+      else if (r === 1) { forms.push('nonante et un'); forms.push('nonante un'); }
+      else forms.push('nonante ' + FR_UNITS[r][0]);
+      return forms;
+    }
   }
 
-  // La réponse orale correspond-elle au résultat attendu ? (chiffres OU mots, tolérant aux accents)
+  // Distance de Levenshtein (nb minimal d'éditions lettre-à-lettre entre 2 mots).
+  // Sert de tolérance : la reconnaissance vocale d'un enfant hésite parfois d'une
+  // lettre/son près (ex. « εφτά » entendu « εφτας »). Distance ≤1 = quasi identique,
+  // sans risque de confondre deux nombres réellement différents (ceux-ci diffèrent
+  // presque toujours de bien plus qu'une lettre).
+  function levenshtein(a, b) {
+    if (a === b) return 0;
+    const al = a.length, bl = b.length;
+    if (!al) return bl; if (!bl) return al;
+    let prev = new Array(bl + 1);
+    for (let j = 0; j <= bl; j++) prev[j] = j;
+    for (let i = 1; i <= al; i++) {
+      const cur = new Array(bl + 1); cur[0] = i;
+      for (let j = 1; j <= bl; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      prev = cur;
+    }
+    return prev[bl];
+  }
+
+  // Un token est-il un mot QUASI identique à une forme du nombre (tolère 1 faute) ?
+  // N'accepte la tolérance que sur des mots d'au moins 4 lettres (évite les
+  // confusions entre petits mots courts type « δυο »/« δεκα » qui sont proches
+  // en distance mais représentent des nombres différents).
+  function fuzzyWordMatch(token, form) {
+    if (token === form) return true;
+    if (form.length < 4 || token.length < 4) return false;
+    if (Math.abs(token.length - form.length) > 1) return false;
+    return levenshtein(token, form) <= 1;
+  }
+
+  // La réponse orale correspond-elle au résultat attendu ? (chiffres OU mots,
+  // tolérant aux accents ET aux petites imperfections de reconnaissance vocale)
   function spokenMatchesAnswer(transcript, answer, lang) {
     const norm = normSpoken(transcript);
     if (!norm) return false;
@@ -204,14 +249,18 @@
     if (digits && digits.some(function (d) { return parseInt(d, 10) === answer; })) return true;
     // 2) mots (comparaison par tokens → évite les faux positifs type « εξι » dans « δεκαεξι »)
     const tokens = norm.split(' ');
+    const glued = norm.replace(/ /g, '');
     const forms = numberWords(answer, lang).map(normSpoken);
     for (let fi = 0; fi < forms.length; fi++) {
       const f = forms[fi];
+      const fGlued = f.replace(/ /g, '');
       if (f.indexOf(' ') === -1) {
         if (tokens.indexOf(f) !== -1) return true;
-        if (tokens.indexOf(f.replace(/ /g, '')) !== -1) return true;
+        // tolérance floue sur un mot isolé (petite erreur de reconnaissance)
+        if (tokens.some(function (tk) { return fuzzyWordMatch(tk, f); })) return true;
       } else {
-        if (tokens.indexOf(f.replace(/ /g, '')) !== -1) return true; // forme « collée »
+        if (tokens.indexOf(fGlued) !== -1) return true; // forme « collée » (ex: "εικοσιενα")
+        if (glued === fGlued || fuzzyWordMatch(glued, fGlued)) return true; // transcript entier collé
         const ft = f.split(' ');
         for (let i = 0; i + ft.length <= tokens.length; i++) {
           if (tokens.slice(i, i + ft.length).join(' ') === f) return true;

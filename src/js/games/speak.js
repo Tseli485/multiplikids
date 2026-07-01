@@ -28,6 +28,8 @@
       this.opening = false;    // une ouverture de session est en cours
       this.netErr = 0;
       this.timers = [];
+      this.pendingFragment = null; // fragment de reconnaissance en attente de recomposition
+      this._fragTimer = null; this._judgeTimer = null;
     }
 
     code() { return (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR'; }
@@ -53,6 +55,8 @@
     next() {
       if (this.i > MAX) { this.finish(); return; }
       this.attempts = 0;
+      this.pendingFragment = null;
+      clearTimeout(this._fragTimer); clearTimeout(this._judgeTimer);
       const a = this.table, b = this.i;
       this.answer = a * b;
       this.host.innerHTML =
@@ -130,9 +134,21 @@
       if (heard) heard.textContent = '« ' + said + ' »';
       this.netErr = 0;
 
-      const ok = (alts || []).some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, MK.i18n.getLang()));
-      MK.progress.recordFact(this.table, this.i, ok);
+      // Le navigateur découpe parfois un nombre en 2 mots (« cinquante » PUIS « six »
+      // dans deux résultats séparés) → on teste aussi CHAQUE alternative combinée
+      // avec le fragment précédent, pour recomposer les nombres à deux mots.
+      const lang = MK.i18n.getLang();
+      const candidates = alts.slice();
+      if (this.pendingFragment) {
+        alts.forEach((tx) => candidates.push(this.pendingFragment + ' ' + tx));
+      }
+      const ok = candidates.some((tx) => MK.engine.spokenMatchesAnswer(tx, this.answer, lang));
+
       if (ok) {
+        // BONNE réponse (éventuellement recomposée à partir de 2 fragments)
+        clearTimeout(this._fragTimer); clearTimeout(this._judgeTimer);
+        this.pendingFragment = null;
+        MK.progress.recordFact(this.table, this.i, true);
         this.speaking = true; this.closeMic(); this.setMic(false);
         this.correct++;
         if (fb) { fb.textContent = t('speak_bravo_kind'); fb.className = 'feedback ok celebrate'; }
@@ -140,23 +156,42 @@
         MK.progress.addXP(10);
         this.i++;
         this.later(() => this.next(), 1100);   // → calcul suivant (annoncé une fois)
+        return;
+      }
+
+      // PAS de correspondance pour l'instant : le navigateur découpe parfois un
+      // nombre en 2 mots séparés (« cinquante » PUIS « six ») → on ne juge PAS
+      // « faux » tout de suite. On garde ce fragment et on attend un court instant
+      // (600 ms) : si un fragment suivant arrive et se combine en bonne réponse,
+      // le jugement « faux » ci-dessous est annulé — l'enfant n'est jamais pénalisé
+      // pour une réponse correcte simplement coupée en deux par la reconnaissance.
+      this.pendingFragment = said;
+      clearTimeout(this._fragTimer);
+      this._fragTimer = this.later(() => { this.pendingFragment = null; }, 2500);
+      clearTimeout(this._judgeTimer);
+      this._judgeTimer = this.later(() => this.judgeWrong(), 600);
+    }
+
+    // Confirmé faux après le court délai de recomposition (voir onSaid)
+    judgeWrong() {
+      if (!this.active || this.speaking) return;
+      const fb = this.host.querySelector('#sp-fb');
+      MK.progress.recordFact(this.table, this.i, false);
+      this.attempts++;
+      if (this.attempts >= GENTLE_TRIES) {
+        // on donne GENTIMENT la réponse puis on avance (l'enfant n'est jamais bloqué)
+        this.speaking = true; this.closeMic(); this.setMic(false);
+        if (fb) { fb.textContent = t('speak_reveal_kind') + ' ' + this.answer; fb.className = 'feedback'; }
+        MK.audio.playTick();
+        MK.audio.speakOperation(this.table, this.i, this.answer, () => {
+          this.i++; this.later(() => this.next(), 200);
+        });
       } else {
-        this.attempts++;
-        if (this.attempts >= GENTLE_TRIES) {
-          // on donne GENTIMENT la réponse puis on avance (l'enfant n'est jamais bloqué)
-          this.speaking = true; this.closeMic(); this.setMic(false);
-          if (fb) { fb.textContent = t('speak_reveal_kind') + ' ' + this.answer; fb.className = 'feedback'; }
-          MK.audio.playTick();
-          MK.audio.speakOperation(this.table, this.i, this.answer, () => {
-            this.i++; this.later(() => this.next(), 200);
-          });
-        } else {
-          // encouragement DOUX, puis on rouvre le micro tranquillement
-          if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
-          MK.audio.playTick();
-          this.speaking = true; this.closeMic();
-          MK.audio.speak(t('speak_again_kind'), this.code(), () => { this.speaking = false; this.openMic(); });
-        }
+        // encouragement DOUX, puis on rouvre le micro tranquillement
+        if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
+        MK.audio.playTick();
+        this.speaking = true; this.closeMic();
+        MK.audio.speak(t('speak_again_kind'), this.code(), () => { this.speaking = false; this.openMic(); });
       }
     }
 
