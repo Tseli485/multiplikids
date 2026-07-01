@@ -2812,6 +2812,11 @@ body[data-theme="candy"] .candy {
   const GENTLE_TRIES = 3;   // après 3 essais, on donne gentiment la réponse et on avance
   const NET_MAX = 5;        // erreurs réseau d'affilée (avec répit) avant message « vérifie Internet »
 
+  // Panneau de diagnostic MASQUÉ par défaut (l'enfant ne doit jamais le voir).
+  // Pour le réactiver en cas de souci futur, dans la console du navigateur :
+  //   localStorage.setItem('multiplikids_debug', '1')
+  function debugOn() { try { return localStorage.getItem('multiplikids_debug') === '1'; } catch (e) { return false; } }
+
   class Speak {
     constructor(host, opts) {
       this.host = host;
@@ -2911,7 +2916,7 @@ body[data-theme="candy"] .candy {
           '<div class="center" id="sp-heard" style="color:var(--color-text-dim);min-height:1.4em"></div>' +
           '<div class="row mt" id="sp-actions"></div>' +
           '<div class="game-hud"><span class="score">' + this.i + ' / ' + MAX + '</span></div>' +
-          '<pre id="sp-debug" style="margin-top:14px;padding:10px;background:#00000055;border-radius:8px;font-size:.7rem;line-height:1.4;color:#9fb4c7;white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto"></pre>' +
+          (debugOn() ? '<pre id="sp-debug" style="margin-top:14px;padding:10px;background:#00000055;border-radius:8px;font-size:.7rem;line-height:1.4;color:#9fb4c7;white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto"></pre>' : '') +
         '</div>';
       // bouton micro = relance manuelle (au cas où)
       const mic = this.host.querySelector('#sp-mic');
