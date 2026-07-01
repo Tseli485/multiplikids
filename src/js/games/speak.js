@@ -14,7 +14,7 @@
   const t = function (k) { return MK.i18n.t(k); };
   const MAX = 10;
   const GENTLE_TRIES = 3;   // après 3 essais, on donne gentiment la réponse et on avance
-  const NET_MAX = 10;       // erreurs réseau d'affilée avant message « vérifie Internet »
+  const NET_MAX = 3;        // erreurs réseau d'affilée avant message « vérifie Internet » (diagnostic rapide)
 
   class Speak {
     constructor(host, opts) {
@@ -288,17 +288,23 @@
       }
       if (err === 'network') {
         this.netErr++;
-        if (this.netErr >= NET_MAX) { const fb = this.host.querySelector('#sp-fb'); if (fb) { fb.textContent = t('speak_mic_error'); fb.className = 'feedback'; } }
-        return; // on continue d'essayer
+        // Erreur RÉSEAU = le navigateur n'arrive pas à joindre le service de
+        // reconnaissance vocale de Google (pare-feu, extension de blocage,
+        // réseau filtré...). Ce n'est PAS un souci de micro ni de matching :
+        // on le signale clairement et vite, avec des boutons d'action.
+        if (this.netErr >= NET_MAX) { this.hardStop('network'); return; }
+        return; // 1-2 fois : peut être transitoire, on retente encore
       }
       this.hardStop(err); // micro refusé / indisponible
     }
 
     hardStop(err) {
       this.active = false; this.closeMic(); this.clearTimers(); this.setMic(false);
+      this.dbg('🛑 arrêt : ' + err);
       const fb = this.host.querySelector('#sp-fb');
       const denied = (err === 'not-allowed' || err === 'service-not-allowed');
-      if (fb) { fb.textContent = denied ? t('speak_mic_denied') : t('speak_mic_error'); fb.className = 'feedback'; }
+      const msg = (err === 'network') ? t('speak_network_error') : (denied ? t('speak_mic_denied') : t('speak_mic_error'));
+      if (fb) { fb.textContent = msg; fb.className = 'feedback'; }
       const actions = this.host.querySelector('#sp-actions');
       if (actions) {
         actions.innerHTML =
