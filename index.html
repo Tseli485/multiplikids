@@ -1280,17 +1280,24 @@ body[data-theme="candy"] .candy {
     let rec;
     try { rec = new SR(); } catch (e) { if (opts.onError) opts.onError('unsupported'); return null; }
     rec.lang = langCode || (MK.i18n ? MK.i18n.speechLang() : 'el-GR');
-    rec.interimResults = false;
+    // Résultats INTERMÉDIAIRES activés : un mot très court (« six », « εννιά »)
+    // dit vite par un enfant met parfois plusieurs secondes à être « finalisé »
+    // par Chrome (voire jamais, en mode continu) → on exploite aussi les
+    // hypothèses provisoires, qui apparaissent en ~100-300ms, bien plus fiable
+    // pour un chiffre isolé que d'attendre la finalisation.
+    rec.interimResults = true;
     rec.maxAlternatives = 8;       // plus d'hypothèses → meilleure reconnaissance de l'enfant
     rec.continuous = !!opts.continuous; // session permanente si demandé
     rec.onresult = function (e) {
       const alts = [];
+      let isFinal = false;
       const start = (typeof e.resultIndex === 'number') ? e.resultIndex : 0;
       for (let r = start; r < e.results.length; r++) {
         const res = e.results[r];
+        if (res.isFinal) isFinal = true;
         for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
       }
-      if (alts.length && opts.onResult) opts.onResult(alts);
+      if (alts.length && opts.onResult) opts.onResult(alts, isFinal);
     };
     rec.onerror = function (e) { if (opts.onError) opts.onError((e && e.error) || 'error'); };
     rec.onend = function () { if (opts.onEnd) opts.onEnd(); };
