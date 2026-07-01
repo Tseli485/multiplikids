@@ -30,6 +30,7 @@
       this.timers = [];
       this.pendingFragment = null; // fragment de reconnaissance en attente de recomposition
       this._fragTimer = null; this._judgeTimer = null;
+      this.micGen = 0; // jeton de génération anti-évènements-tardifs (voir openMic)
     }
 
     code() { return (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR'; }
@@ -101,6 +102,13 @@
     }
 
     // Ouvre la session d'écoute (continue) et la garde ouverte ; PATIENTE.
+    // Jeton de génération (micGen) : une session de reconnaissance FERMÉE peut
+    // encore envoyer ses évènements (onEnd/onError) EN RETARD, après qu'une
+    // NOUVELLE session ait déjà démarré. Sans garde, ces évènements périmés
+    // écrasaient `this.rec` de la session ACTUELLE (this.rec = null) et
+    // déclenchaient une réouverture concurrente → la reconnaissance cessait de
+    // fonctionner après la 1re question. Chaque callback vérifie maintenant
+    // qu'il appartient bien à la génération EN COURS avant d'agir.
     openMic(force) {
       if (!this.active || this.speaking) return;
       if (this.rec && !force) return;
@@ -112,11 +120,13 @@
       const hint = this.host.querySelector('#sp-hint');
       if (hint) hint.textContent = t('speak_ready');
       const self = this;
+      const myGen = ++this.micGen;
       this.rec = MK.audio.listen(this.code(), {
         continuous: true,
-        onResult: function (alts) { self.onSaid(alts); },
-        onError: function (err) { self.opening = false; self.onErr(err); },
+        onResult: function (alts, isFinal) { if (myGen !== self.micGen) return; self.onSaid(alts, isFinal); },
+        onError: function (err) { if (myGen !== self.micGen) return; self.opening = false; self.onErr(err); },
         onEnd: function () {
+          if (myGen !== self.micGen) return; // session périmée : on l'ignore complètement
           self.opening = false; self.rec = null; self.setMic(false);
           // silence / fin de session → on rouvre en SILENCE (aucun reproche, attente illimitée)
           if (self.active && !self.speaking) self.later(function () { self.openMic(); }, 250);
@@ -127,6 +137,7 @@
     }
 
     closeMic() {
+      this.micGen++; // invalide immédiatement toute callback tardive de CETTE session
       if (this.rec) { try { this.rec.abort ? this.rec.abort() : this.rec.stop(); } catch (e) {} this.rec = null; }
     }
 
