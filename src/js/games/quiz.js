@@ -110,6 +110,8 @@
         fb.textContent = t('wrong'); fb.className = 'feedback ko';
         MK.visual.shake(this.host.querySelector('.game-stage'));
         MK.audio.playWrong();
+        // renforcement pédagogique : l'enfant ENTEND la bonne réponse, pas juste vue en vert
+        MK.audio.speakOperation(this.q.a, this.q.b, this.q.answer);
       }
       this.qIndex++;
       setTimeout(() => this.next(), 1200);
@@ -126,6 +128,7 @@
         if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct');
       });
       MK.audio.playWrong();
+      MK.audio.speakOperation(this.q.a, this.q.b, this.q.answer);
       this.qIndex++;
       setTimeout(() => this.next(), 1200);
     }

@@ -132,8 +132,10 @@
         fb.textContent = t('wrong'); fb.className = 'feedback ko';
         MK.visual.shake(this.host.querySelector('#rk-field'));
         MK.audio.playWrong();
+        MK.audio.speakOperation(this.q.a, this.q.b, this.q.answer);
       }
-      setTimeout(() => this.next(), 800);
+      // délai plus long sur erreur : laisse le temps d'entendre la bonne réponse
+      setTimeout(() => this.next(), ok ? 800 : 1900);
     }
 
     end(win) {

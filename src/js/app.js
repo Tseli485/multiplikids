@@ -335,8 +335,6 @@
     const table = parseInt(params.table, 10) || 2;
     const lang = MK.i18n.getLang();
     const code = (lang === 'fr') ? 'fr-FR' : 'el-GR';
-    const times = MK.i18n.t('times');
-    const eq = MK.i18n.t('equals');
 
     const MAX = 10; // les leçons vont jusqu'à ×10
     let rows = '';
@@ -362,8 +360,9 @@
     el('study-melody').addEventListener('click', function () { MK.audio.resume(); MK.audio.stopSpeech(); MK.audio.playMelody(); });
 
     // Phrases à prononcer (intro + lignes ×1..×10) — index aligné avec data-i (ligne k = i=k)
+    // Diction fluide : une seule source de vérité pour la phrase (MK.audio.buildOperationPhrase)
     const lines = [t('table_of') + ' ' + table];
-    for (let i = 1; i <= MAX; i++) lines.push(table + ', ' + times + ', ' + i + ', ' + eq + ', ' + (table * i));
+    for (let i = 1; i <= MAX; i++) lines.push(MK.audio.buildOperationPhrase(table, i, table * i));
 
     const highlight = function (i) {
       app.querySelectorAll('.study-row.active').forEach(function (e) { e.classList.remove('active'); });

@@ -167,16 +167,24 @@
     });
   }
 
-  // Énonce « a FOIS b ÉGALE r » (ou sans résultat). onDone appelé à la fin.
+  // Construit une phrase NATURELLE et FLUIDE (pas de virgule entre chaque mot,
+  // qui hache la diction) : une seule pause naturelle avant la clause résultat,
+  // exactement comme un enseignant le dirait à voix haute.
+  // FR : "7 fois 8, égale 56"   EL : "7 επί 8, ίσον 56"
+  function buildOperationPhrase(a, b, r) {
+    const times = MK.i18n.t('times');   // fr: "fois"  | el: "επί"
+    const eq = MK.i18n.t('equals');     // fr: "égale" | el: "ίσον"
+    let txt = a + ' ' + times + ' ' + b;
+    if (r !== undefined && r !== null) txt += ', ' + eq + ' ' + r;
+    return txt;
+  }
+
+  // Énonce « a FOIS b ÉGALE r » (ou sans résultat), diction fluide. onDone à la fin.
   // L'opérateur (× = « fois » / « επί ») est TOUJOURS énoncé.
   function speakOperation(a, b, r, onDone) {
     const lang = MK.i18n ? MK.i18n.getLang() : 'el';
     const code = (lang === 'fr') ? 'fr-FR' : 'el-GR';
-    const times = MK.i18n.t('times');   // fr: "fois"  | el: "επί"
-    const eq = MK.i18n.t('equals');     // fr: "égale" | el: "ίσον"
-    let txt = a + ', ' + times + ', ' + b;
-    if (r !== undefined && r !== null) txt += ', ' + eq + ', ' + r;
-    speak(txt, code, onDone);
+    speak(buildOperationPhrase(a, b, r), code, onDone);
   }
 
   function cancel() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {} }
@@ -289,7 +297,7 @@
 
   window.MK.audio = {
     playCorrect: playCorrect, playWrong: playWrong, playFanfare: playFanfare, playTick: playTick, playMelody: playMelody,
-    speak: speak, speakOperation: speakOperation, cancel: cancel,
+    speak: speak, speakOperation: speakOperation, buildOperationPhrase: buildOperationPhrase, cancel: cancel,
     narrate: narrate, stopSpeech: stopSpeech,
     setEnabled: setEnabled, isEnabled: isEnabled, resume: ensureCtx,
     primeVoices: primeVoices, hasVoice: hasVoice,

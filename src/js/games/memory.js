@@ -83,6 +83,10 @@
         MK.audio.playCorrect();
         MK.progress.addXP(10);
         this.updateCounter();
+        // renforcement : énonce l'opération complète pour ancrer l'association
+        const opCard = (a.card.kind === 'op') ? a.card : b.card;
+        const parts = opCard.label.split('×');
+        MK.audio.speakOperation(parseInt(parts[0], 10), parseInt(parts[1], 10), opCard.key);
         if (this.matched === this.totalPairs) setTimeout(() => this.finish(), 600);
       } else {
         this.lock = true;

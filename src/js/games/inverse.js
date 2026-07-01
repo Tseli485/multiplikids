@@ -36,8 +36,10 @@
       this.b = b; this.product = a * b;
       this.options = distractFactor(b);
       this.render();
-      // on énonce SEULEMENT le produit (jamais le facteur à trouver)
-      MK.audio.speak(String(this.product), (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR');
+      // on énonce le produit avec un cadre naturel ("Le produit est 56"),
+      // jamais le facteur à trouver — phrase complète, pas un chiffre nu
+      const code = (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR';
+      MK.audio.speak(t('product_is') + ' ' + this.product, code);
     }
 
     render() {

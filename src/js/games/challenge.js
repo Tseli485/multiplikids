@@ -56,6 +56,7 @@
         this.host.querySelectorAll('.answer-btn').forEach((b) => { if (parseInt(b.dataset.v, 10) === this.q.answer) b.classList.add('correct'); });
         if (fb) { fb.textContent = t('speak_almost'); fb.className = 'feedback'; }
         MK.audio.playWrong();
+        MK.audio.speakOperation(this.q.a, this.q.b, this.q.answer);
       }
       this.qIndex++;
       setTimeout(() => this.next(), 1200);
