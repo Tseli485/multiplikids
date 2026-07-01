@@ -2810,7 +2810,7 @@ body[data-theme="candy"] .candy {
   const t = function (k) { return MK.i18n.t(k); };
   const MAX = 10;
   const GENTLE_TRIES = 3;   // après 3 essais, on donne gentiment la réponse et on avance
-  const NET_MAX = 3;        // erreurs réseau d'affilée avant message « vérifie Internet » (diagnostic rapide)
+  const NET_MAX = 5;        // erreurs réseau d'affilée (avec répit) avant message « vérifie Internet »
 
   class Speak {
     constructor(host, opts) {
@@ -3085,11 +3085,12 @@ body[data-theme="candy"] .candy {
       if (err === 'network') {
         this.netErr++;
         // Erreur RÉSEAU = le navigateur n'arrive pas à joindre le service de
-        // reconnaissance vocale de Google (pare-feu, extension de blocage,
-        // réseau filtré...). Ce n'est PAS un souci de micro ni de matching :
-        // on le signale clairement et vite, avec des boutons d'action.
+        // reconnaissance vocale de Google. Souvent TRANSITOIRE (petit à-coup de
+        // connexion lors d'une réouverture rapprochée du micro) — on laisse un
+        // court répit avant de retenter, pour ne pas cumuler les échecs à tort.
         if (this.netErr >= NET_MAX) { this.hardStop('network'); return; }
-        return; // 1-2 fois : peut être transitoire, on retente encore
+        this.later(() => { if (this.active && !this.speaking) this.openMic(true); }, 1200);
+        return;
       }
       this.hardStop(err); // micro refusé / indisponible
     }
