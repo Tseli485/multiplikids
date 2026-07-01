@@ -31,6 +31,18 @@
       this.pendingFragment = null; // fragment de reconnaissance en attente de recomposition
       this._fragTimer = null; this._judgeTimer = null;
       this.micGen = 0; // jeton de génération anti-évènements-tardifs (voir openMic)
+      this.dbgLines = []; this.dbgT0 = Date.now(); // panneau de diagnostic (voir dbg())
+    }
+
+    // Journal de diagnostic TOUJOURS VISIBLE (aucune information cachée pendant
+    // le dépannage) : montre en direct le support, la permission, chaque erreur
+    // brute et chaque texte capté, avec horodatage relatif au début de la partie.
+    dbg(msg) {
+      const ms = Date.now() - this.dbgT0;
+      this.dbgLines.unshift('[' + ms + 'ms] ' + msg);
+      if (this.dbgLines.length > 8) this.dbgLines.length = 8;
+      const el = this.host && this.host.querySelector('#sp-debug');
+      if (el) el.textContent = this.dbgLines.join('\n');
     }
 
     code() { return (MK.i18n.getLang() === 'fr') ? 'fr-FR' : 'el-GR'; }
@@ -40,17 +52,37 @@
     start() {
       this.i = 1; this.correct = 0; this.netErr = 0; this.active = true;
       this.everHeard = false; this.silentStreak = 0; this.audioCapErr = 0;
+      this.dbgLines = []; this.dbgT0 = Date.now();
+      this.dbg('secure=' + window.isSecureContext + ' support=' + MK.audio.canRecognize() + ' ua=' + navigator.userAgent.slice(0, 40));
       if (!MK.audio.canRecognize()) { this.renderUnsupported(); return; }
-      this.next();
-      // Vérif proactive de la permission micro (si le navigateur l'expose) : évite
-      // à l'enfant d'attendre en silence si le micro est déjà bloqué au départ.
-      try {
-        if (navigator.permissions && navigator.permissions.query) {
-          navigator.permissions.query({ name: 'microphone' }).then((st) => {
-            if (st.state === 'denied' && this.active) this.hardStop('not-allowed');
-          }).catch(() => {});
-        }
-      } catch (e) {}
+      this.renderAsking(); // écran d'attente pendant qu'on demande le micro
+      // Demande EXPLICITE et FIABLE du micro (getUserMedia) AVANT de démarrer la
+      // reconnaissance : si l'enfant n'a jamais cliqué « Autoriser » (ou que la
+      // popup est passée inaperçue), la reconnaissance vocale ne capte JAMAIS
+      // rien, en silence — sans qu'on le sache. getUserMedia force une réponse
+      // claire (accordé / refusé) au lieu de laisser la permission indéfiniment
+      // « en attente ».
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+          this.dbg('✅ permission micro accordée (getUserMedia)');
+          stream.getTracks().forEach((tr) => tr.stop()); // la reconnaissance gère son propre flux
+          if (this.active) this.next();
+        }).catch((e) => {
+          this.dbg('❌ permission micro refusée/impossible: ' + (e && e.name));
+          this.hardStop('not-allowed');
+        });
+      } else {
+        this.dbg('getUserMedia indisponible → démarrage direct (moins fiable)');
+        this.next();
+      }
+    }
+
+    renderAsking() {
+      this.host.innerHTML =
+        '<div class="game-stage center screen-enter">' +
+          '<p style="font-size:2.4rem">🎤</p>' +
+          '<p>' + t('speak_ready') + '…</p>' +
+        '</div>';
     }
 
     renderUnsupported() {
@@ -83,10 +115,15 @@
           '<div class="center" id="sp-heard" style="color:var(--color-text-dim);min-height:1.4em"></div>' +
           '<div class="row mt" id="sp-actions"></div>' +
           '<div class="game-hud"><span class="score">' + this.i + ' / ' + MAX + '</span></div>' +
+          '<pre id="sp-debug" style="margin-top:14px;padding:10px;background:#00000055;border-radius:8px;font-size:.7rem;line-height:1.4;color:#9fb4c7;white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto"></pre>' +
         '</div>';
       // bouton micro = relance manuelle (au cas où)
       const mic = this.host.querySelector('#sp-mic');
       mic.addEventListener('click', () => { this.netErr = 0; this.speaking = false; this.openMic(true); });
+      // republie le journal de diagnostic (le HTML vient d'être recréé pour cette question)
+      const dbgEl = this.host.querySelector('#sp-debug');
+      if (dbgEl) dbgEl.textContent = this.dbgLines.join('\n');
+      this.dbg('Q' + this.i + ' : ' + a + '×' + b + '=' + this.answer);
       // énonce le calcul UNE fois, PUIS ouvre le micro (jamais pendant l'annonce)
       this.announce(a, b);
     }
@@ -121,17 +158,28 @@
       if (hint) hint.textContent = t('speak_ready');
       const self = this;
       const myGen = ++this.micGen;
+      this.dbg('🎤 ouverture micro (gen ' + myGen + ') lang=' + this.code());
       this.rec = MK.audio.listen(this.code(), {
         continuous: true,
-        onResult: function (alts, isFinal) { if (myGen !== self.micGen) return; self.onSaid(alts, isFinal); },
-        onError: function (err) { if (myGen !== self.micGen) return; self.opening = false; self.onErr(err); },
+        onResult: function (alts, isFinal) {
+          self.dbg((isFinal ? '📝final: ' : '📝interim: ') + JSON.stringify(alts));
+          if (myGen !== self.micGen) { self.dbg('(ignoré : session périmée)'); return; }
+          self.onSaid(alts, isFinal);
+        },
+        onError: function (err) {
+          self.dbg('⚠️ erreur reconnaissance: ' + err + (myGen !== self.micGen ? ' (session périmée, ignorée)' : ''));
+          if (myGen !== self.micGen) return;
+          self.opening = false; self.onErr(err);
+        },
         onEnd: function () {
-          if (myGen !== self.micGen) return; // session périmée : on l'ignore complètement
+          if (myGen !== self.micGen) { self.dbg('fin session périmée (gen ' + myGen + '), ignorée'); return; }
+          self.dbg('session micro terminée (gen ' + myGen + ')');
           self.opening = false; self.rec = null; self.setMic(false);
           // silence / fin de session → on rouvre en SILENCE (aucun reproche, attente illimitée)
           if (self.active && !self.speaking) self.later(function () { self.openMic(); }, 250);
         },
       });
+      if (!this.rec) this.dbg('❌ MK.audio.listen() a renvoyé null (non supporté ?)');
       this.later(() => { this.opening = false; }, 700);
       if (!this.rec) { this.opening = false; this.setMic(false); }
     }
